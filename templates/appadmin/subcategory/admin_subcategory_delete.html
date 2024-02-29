@@ -1,0 +1,12 @@
+{% extends 'base/admin_base.html' %}
+
+{% block content %}
+  <h2>Confirm Deletion</h2>
+  <p>Are you sure you want to delete the subcategory "{{ subcat.sub_name }}"?</p>
+  
+  <form method="post" action="{% url 'appadmin:admin_delete_subcategory' subcat_id=subcat.sid %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Confirm Delete</button>
+    <a href="{% url 'appadmin:admin_subcategory' %}" class="btn btn-secondary">Cancel</a>
+  </form>
+{% endblock %}

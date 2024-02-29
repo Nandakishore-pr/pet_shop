@@ -1,0 +1,130 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+    .checkout-form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .form-section {
+        margin-bottom: 20px;
+    }
+    
+
+
+</style>
+
+{% comment %} <form id="order-form" method="post" action="{% url 'core:checkout_view' %}">
+    {% csrf_token %}
+    <h2>Select Address</h2>
+    <ul>
+        {% for address in user_addresses %}
+            <li>
+                <label>
+                    <input type="radio" name="address_id" value="{{ address.id }}" class="address-option">
+                    {{ address.street_address }}, {{ address.city }}, {{ address.state }} - {{ address.postal_code }}
+                </label>
+            </li>
+        {% empty %}
+            <li>No addresses found</li>
+        {% endfor %}
+    </ul>
+    <br>
+    <ul>
+        {% for cart_item in cart_items %}
+        <li>{{ cart_item.product.title }} - Quantity: {{ cart_item.quantity }}</li>
+        {% endfor %}
+    </ul>
+    <h2>Total Cart Price: ${{ total_cart_price }}</h2>
+    <br>
+    <h2>Select Payment Method</h2>
+    <ul>
+        <li>
+            <label>
+                <input type="radio" name="payment_method" value="credit_card" class="payment-option">
+                Credit Card
+            </label>
+        </li>
+        <li>
+            <label>
+                <input type="radio" name="payment_method" value="debit_card" class="payment-option">
+                Debit Card
+            </label>
+        </li>
+        <li>
+            <label>
+                <input type="radio" name="payment_method" value="paypal" class="payment-option">
+                PayPal
+            </label>
+        </li>
+        <li>
+            <label>
+                <input type="radio" name="payment_method" value="cash_on_delivery" class="payment-option">
+                Cash on Delivery
+            </label>
+        </li>
+        <!-- Add more payment methods as needed -->
+    </ul>
+    <br>
+
+    <input type="submit" class="btn primary-btn" value="PLACE ORDER" disabled>
+   
+</form> {% endcomment %}
+<form method="POST" action="{% url 'core:checkout_view' %}" class="checkout-form">
+    {% csrf_token %}
+    <div class="form-section">
+        <h3>Total Cart Price: ${{ total_cart_price }}</h3>
+        <ul>
+            {% for cart_item in cart_items %}
+            <li>{{ cart_item.product.title }} - Quantity: {{ cart_item.quantity }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="form-section">
+        {{ address_form.as_p }}
+    </div>
+    <div class="form-section">
+        {{ payment_form.as_p }}
+    </div>
+    <div class="form-section">
+        <button type="submit" class='btn btn-primary'>Place Order</button>
+    </div>
+</form>
+
+
+{% comment %} <script>
+    // Get all radio buttons for address and payment method
+    const addressOptions = document.querySelectorAll('.address-option');
+    const paymentOptions = document.querySelectorAll('.payment-option');
+    const placeOrderBtn = document.querySelector('.btn');
+
+    // Function to check if both address and payment method are selected
+    function checkSelection() {
+        const addressSelected = [...addressOptions].some(option => option.checked);
+        const paymentSelected = [...paymentOptions].some(option => option.checked);
+        
+        // Enable the button if both address and payment method are selected; otherwise, disable it
+        if (addressSelected && paymentSelected) {
+            placeOrderBtn.removeAttribute('disabled');
+        } else {
+            placeOrderBtn.setAttribute('disabled', true);
+        }
+    }
+
+    // Add event listeners to address and payment method radio buttons
+    addressOptions.forEach(option => {
+        option.addEventListener('change', checkSelection);
+    });
+
+    paymentOptions.forEach(option => {
+        option.addEventListener('change', checkSelection);
+    });
+
+    // Call the checkSelection function initially to set the initial state of the button
+    checkSelection();
+</script> {% endcomment %}
+
+{% endblock %}

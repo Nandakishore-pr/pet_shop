@@ -1,0 +1,87 @@
+{% extends "base/admin_base.html" %}
+{% load static %}
+{% block content %}
+
+<section class="content-main">
+    <div class="content-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="card-title">Product List</h4>
+                                <!-- Add New Category button in the top right corner -->
+                                <a href="{% url "appadmin:admin_add_product" %}" class="btn btn-primary">Add New Product</a>
+                            </div>
+                            <br>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered" style="border-color: black;">
+                                    <thead>
+                                        <tr>
+                                            <!-- Your table headers here -->
+                                            <th>id</th>
+                                            <th>Name</th>
+                                            <th>Image</th>
+                                            <th>Price</th>
+                                            <th>Category</th>
+                                            <th>Sub Category</th>
+                                            <th>Featured</th>
+                                            <th>Latest</th>
+                                            <th>Status</th>
+                                            <th>Stock</th>
+                                            <th class="col-md-1">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for p in products %}
+                                        <tr>
+                                            <!-- Your table data here -->
+                                            <td>{{ p.pid}}</td>
+                                            <td><b>{{ p.title }}</b></td>
+                                            <td>
+                                                {% if p.image %}
+                                                  <img src="{{ p.image.url }}" alt="{{ p.name }} Image" width="50" height="50">
+                                                {% else %}
+                                                  No Image
+                                                {% endif %}
+                                              </td>
+                                            <td>{{p.price|floatformat:"2"}} $</td>
+                                            <td>{{ p.category }}</td>
+                                            <td>{{ p.sub_category.sub_name }}</td>
+                                            <td>{{ p.featured }}</td>
+                                            <td>{{ p.latest }}</td>
+                                            <td>{{p.status}}</td>
+                                            <td>{% if p.stock != 0 %}{{ p.stock }}{% else %}out of stock{% endif %}</td>
+
+
+                                            
+                                            
+                                            <td class="text-center align-middle col-md-3">
+                                                <div class="d-flex gap-2">
+                                                    <div class="btn-group">
+                                                        <a href="{% url 'appadmin:admin_edit_product' p.pid %}"class="btn btn-light rounded btn-sm font-sm" role="button">Edit info</a>
+                                                    </div>
+                                                    <div class="btn-group">
+                                                        <a href="{% url "appadmin:admin_delete_product" p.pid %}"  class="btn btn-light rounded btn-sm font-sm text-danger" role="button">Delete</a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div> <!-- card-body .// -->
+                    </div> <!-- card .// -->
+                </div> <!-- .col // -->
+                
+            </div> <!-- .row // -->
+        </div> <!-- .container // -->
+    </div> <!-- content-header .// -->
+</section>
+
+
+
+{% endblock %}

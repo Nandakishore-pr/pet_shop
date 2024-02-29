@@ -1,0 +1,154 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+    .checkout-btn{
+        display: flex;
+        justify-content:flex-end;
+        margin-right:150px;
+        margin-bottom:30px;
+    }
+    .price-align{
+        display: flex;
+        justify-content:flex-end;
+        margin-right:33em;
+        margin-bottom:30px;
+    }
+    .table-align{
+        margin-left:40px;
+    }
+</style> 
+
+{% if cart_items %}
+    <h2 style='text-align:center'>Cart Items</h2>
+    <br>
+    <table class="table table-align">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total Price</th>
+                <th>Action</th>
+               
+            </tr>
+        </thead>
+        <tbody>
+            {% for cart_item in cart_items %}
+                <tr>
+                    <td><img src="{{ cart_item.product.image.url }}" alt="{{ cart_item.product.title }}" width="50"></td>
+                    <td>{{ cart_item.product.title }}</td>
+                    <td>${{ cart_item.product.price }}</td>
+                    <td>
+                        <button onclick="decreaseQuantity('{{ cart_item.id }}')">-</button>
+                        <span id="quantity{{ cart_item.id }}">{{ cart_item.quantity }}</span>
+                        <button  onclick="increaseQuantity('{{ cart_item.id }}')">+</button>
+                        {% comment %} {% endcomment %}
+                    </td>
+                    <td>${{ cart_item.total_price}}</td>
+                    <td><button class='primary-btn remove-item-btn' data-cart-item-id="{{ cart_item.id }}">Remove</button></td>
+                    {% comment %} onclick="removeCartItem('{{ cart_item.id }}')" {% endcomment %}
+                </tr>
+            {% endfor %}
+            
+        </tbody>
+    </table>
+    <div class='price-align'>
+        <h4> ${{ total_cart_price }}</h4>
+    </div>
+    <div class='checkout-btn'>
+        <button class= 'btn primary-btn'><a href="{% url "core:checkout_view" %}" style='color:white'>checkout</a></button>
+
+    </div>
+{% else %}
+    <h2>Your cart is empty.</h2>
+{% endif %}
+
+<script>
+    function increaseQuantity(cartItemId) {
+        fetch(`/increase_quantity/${cartItemId}`)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Failed to increase quantity');
+                }
+            })
+            .then(data => {
+                document.getElementById(`quantity${cartItemId}`).innerText = data.quantity;
+                const price = parseFloat(document.getElementById(`price${cartItemId}`).innerText.replace('$', ''));
+                const total = price * data.quantity;
+                document.getElementById(`total${cartItemId}`).innerText = '$' + total.toFixed(2);
+                updateTotalCartPrice();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    
+    function decreaseQuantity(cartItemId) {
+        fetch(`/decrease_quantity/${cartItemId}`)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Failed to decrease quantity');
+                }
+            })
+            .then(data => {
+                document.getElementById(`quantity${cartItemId}`).innerText = data.quantity;
+                const price = parseFloat(document.getElementById(`price${cartItemId}`).innerText.replace('$', ''));
+                const total = price * data.quantity;
+                document.getElementById(`total${cartItemId}`).innerText = '$' + total.toFixed(2);
+                updateTotalCartPrice();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    
+    function updateTotalCartPrice() {
+        const totalPrices = document.querySelectorAll('.total-price');
+        let totalCartPrice = 0;
+        totalPrices.forEach(price => {
+            totalCartPrice += parseFloat(price.innerText.replace('$', ''));
+        });
+        document.getElementById('total_cart_price').innerText = '$' + totalCartPrice.toFixed(2);
+    }
+
+    document.querySelectorAll('.remove-item-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const cartItemId = this.getAttribute('data-cart-item-id');
+            fetch(`/remove_from_cart/${cartItemId}/`, {
+                method: 'POST',  // Sending a POST request
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'  // Include CSRF token for security
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Item removed successfully
+                    // You can update the UI or perform any other actions here
+                    const row = button.closest('tr');
+                    row.parentNode.removeChild(row);
+                    console.log('Item removed from cart successfully');
+                } else {
+                    // Handle error
+                    console.error('Failed to remove item from cart');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Handle error
+            });
+        });
+    });
+
+    
+</script>
+
+
+
+{% endblock %}

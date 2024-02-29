@@ -1,0 +1,22 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block content %}
+<style>
+    .order-align{
+        margin-left:350px;
+    }
+    .order-align-btn{
+        margin-left:45em;
+    }
+</style>
+<br>
+<br>
+<h1 class='order-align'>YOUR ORDER HAS PLACED</h1>
+<div class='align-center'>
+<a href="{% url "core:index" %}" class='btn btn-primary order-align-btn'>HOME</a>
+</div>
+<br>
+<br>
+
+{% endblock %}
+

@@ -1,0 +1,70 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+
+    .cancel-button {
+        text-align: center; /* Align the button in the center */
+    }
+</style>
+
+<h2 style="text-align:center">Your Orders</h2>
+{% if user_orders %}
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Total Amount</th>
+                <th>Shipping Address</th>
+                <th>Product Details</th>
+                <th>cancel order</th>
+                <th>status</th>
+                <!-- Add more headers for additional order details if needed -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in user_orders %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>${{ order.total_amount }}</td>
+                    <td>{{ order.shipping_address }}</td>
+                    <td>
+                        {% for product_detail in order.product_details %}
+                            {{ product_detail.product_title }} - Quantity: {{ product_detail.quantity }}<br>
+                            <!-- Add more product details if needed -->
+                        {% endfor %}
+                    </td>
+                    <!-- Add more cells for additional order details if needed -->
+                    <td>
+                        <form method="post" action="{% url 'core:orders' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="order_id" value="{{ order.id }}">
+                            <button type="submit" class="btn btn-primary">Cancel Order</button>
+                        </form>
+                    </td>
+                    <td>{{ order.status}}</td>
+                </tr>
+                
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No orders found.</p>
+{% endif %}
+
+{% endblock %}

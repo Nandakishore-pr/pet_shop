@@ -1,0 +1,276 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    .btn-align{
+        margin-left : 15em;
+       
+        
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; 
+        height: 100% ;
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal content */
+    .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto; /* 10% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 40%; /* Could be more or less, depending on screen size */
+
+    }
+
+    /* Close button */
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    
+        /* Center the form horizontally */
+        #add-address-form {
+            margin: 0 auto; /* This will center the form */
+            width: 300px; /* Adjust the width as needed */
+            padding: 20px; /* Add some padding for spacing */
+            border: 1px solid #ccc; /* Add a border for visual separation */
+        }
+        /* Add space between form fields */
+        #add-address-form input[type="text"] {
+            margin-bottom: 10px; /* Adjust as needed */
+            width: 100%; /* Make the input fields full width */
+        }
+        /* Style the submit button */
+        #add-address-form button[type="submit"] {
+            width: 100%; /* Make the button full width */
+        }
+        .address-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .icon-container {
+            display: flex;
+                
+        }
+        
+        .edit-icon,
+        .delete-icon {
+            width: 30px;
+            height: 16px;
+            margin-left: 10px; /* Adjust margin as needed */
+        }
+        
+</style>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card mt-5">
+                <div class="card-header">
+                    <h3>User Profile</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item"><strong>Username:</strong> {{ user.username }}</li>
+                        <li class="list-group-item"><strong>Email:</strong> {{ user.email }}</li>
+                        <li class="list-group-item"><strong>First Name:</strong> {{ user.first_name }}</li>
+                        <li class="list-group-item"><strong>Last Name:</strong> {{ user.last_name }}</li>
+                        <!-- Display Profile Information -->
+                        {% comment %} {% if user.profile %} {% endcomment %}
+                        <li class="list-group-item"><strong>Full Name:</strong> {{ user.profile.full_name }}</li>
+                        <li class="list-group-item"><strong>Bio:</strong> {{ user.profile.bio }}</li>
+                        <li class="list-group-item"><strong>Phone:</strong> {{ user.profile.phone }}</li>
+                        {% comment %} {% endif %} {% endcomment %}
+                        <!-- Display Address Information -->
+                        {% comment %} {% if user.address_set.all %} {% endcomment %}
+                        
+                        <li class="list-group-item"><strong>Address:</strong>
+                            <button type="button" class="btn btn-primary  btn-align" id="add-address-btn">Add New Address</button>
+                            <br>
+                            
+                            <ul>
+                                <br>
+                                {% for address in user.address_set.all %}
+                                <li>
+                                    {{ address.street_address }},
+                                    {{ address.city }},
+                                    {{ address.state }},
+                                    {{ address.postal_code }},
+                                    {{ address.country }}
+                                    {% if address.is_default %}
+                                    (Default)
+                                    {% endif %}
+                                    <div class="icon-container">
+                                        <a href="#" class="edit-address-btn" data-address-id="{{ address.id }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="edit-icon">
+                                            <path fill="#000000" d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"/>
+                                        </svg>
+                                        </a>
+                                        <a href="{% url 'core:delete_address' address.id %}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="delete-icon">
+                                                <path fill="#000000" d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/>
+                                            </svg>
+                                        </a>
+                                    </div>
+
+
+                                   <!-- Button to trigger the modal -->
+
+                                            <!-- The modal -->
+                                            <div id="add-address-modal" class="modal">
+                                                <div class="modal-content">
+                                                    <span class="close">&times;</span>
+                                                    <!-- Add New Address Form -->
+                                                   <form id="add-address-form" method="post" action="{% url 'core:add_address' %}">
+                                                        {% csrf_token %}
+                                                        <!-- Add form fields for the new address -->
+                                                        <!-- Example: -->
+                                                        <input type="text" name="street_address" placeholder="Street Address">
+                                                        <input type="text" name="city" placeholder="City">
+                                                        <input type="text" name="state" placeholder="State">
+                                                        <input type="text" name="postal_code" placeholder="Postal_code">
+                                                        <input type="text" name="country" placeholder="Country">
+
+                                                        <!-- Add other address fields as needed -->
+                                                        <button type="submit" class="btn btn-primary">Save Address</button>
+                                                    </form>
+                                                </div>
+                                             </div> 
+                                </li>
+                                <br>
+                                {% endfor %}
+                                
+                                <div id="edit-address-modal" class="modal">
+                                    <div class="modal-content">
+                                        <span class="close">&times;</span>
+                                        <!-- Edit Address Form -->
+                                        {% comment %} action="{% url 'core:edit_address' address_id=address_id %}" {% endcomment %}
+                                        <form id="edit-address-form" method="post" >
+                                            {% csrf_token %}
+                                            <!-- Example: Populate the form fields with address details -->
+                                            <input type="text" name="street_address" placeholder="Street Address" value="{{ address.street_address }}">
+                                            <input type="text" name="city" placeholder="City" value="{{ address.city }}">
+                                            <input type="text" name="state" placeholder="State" value="{{ address.state }}">
+                                            <input type="text" name="postal_code" placeholder="Postal_code" value="{{ address.postal_code }}">
+                                            <input type="text" name="country" placeholder="Country" value="{{ address.country }}">
+                                            <button type="submit" class="btn btn-primary">Save Address</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                            </ul>
+
+                            
+                        </li>
+                        {% comment %} {% endif %} {% endcomment %}
+                    </ul>
+                    
+                    <a href="{% url "core:edit_profile" %}" class="btn btn-primary mt-3">Edit Profile</a>
+                    <!-- Replace 'edit_profile' with the name of your edit profile URL pattern -->
+                    <a href="{% url 'core:password_change' %}" class="btn btn-primary mt-3">Change Password</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Button trigger modal -->
+{% comment %} <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalCenter">
+    Launch demo modal
+  </button>
+  
+  <!-- Modal -->
+  <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          ...
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div> {% endcomment %}
+
+<script>
+    // Get the modal
+    var modal = document.getElementById("add-address-modal");
+
+    // Get the button that opens the modal
+    var btn = document.getElementById("add-address-btn");
+
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks the button, open the modal
+    btn.onclick = function() {
+        modal.style.display = "block";
+    }
+
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+ 
+        // Script to open the modal when clicking on the edit address button
+        var editAddressBtns = document.querySelectorAll('.edit-address-btn');
+        editAddressBtns.forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var addressId = btn.getAttribute('data-address-id');
+                var modal = document.getElementById('edit-address-modal');
+                modal.style.display = 'block';
+                // Populate the form with address details via AJAX or other method
+                // You can make an AJAX request to fetch the address details based on the addressId
+            });
+        });
+    
+        // Script to close the modal
+        var closeBtn = document.querySelector('.close');
+        closeBtn.addEventListener('click', function() {
+            var modal = document.getElementById('edit-address-modal');
+            modal.style.display = 'none';
+        });
+</script> 
+
+
+{% endblock %}

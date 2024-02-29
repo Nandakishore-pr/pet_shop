@@ -1,0 +1,59 @@
+{% extends "base/admin_base.html" %}
+{% load static %}
+{% block content %}
+
+<section class="content-main">
+    <div class="content-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-10">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered" style="border-color: black;">
+                                    <thead>
+                                        <tr>
+                                            <!-- Your table headers here -->
+                                            <th>ID</th>
+                                            <th>First Name</th>
+                                            <th>Last Name</th>
+                                            <th>Username</th>
+                                            <th>Email</th>
+                                            <th class="col-md-1">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in users %}
+                                        <tr>
+                                            <!-- Your table data here -->
+                                            <td>{{ user.id }}</td>
+                                            <td>{{ user.first_name }}</td>
+                                            <td>{{ user.last_name }}</td>
+                                            <td>{{ user.username }}</td>
+                                            <td>{{ user.email }}</td>
+                                            
+                                            <td class="text-center align-middle col-md-4">
+                                                <div class="d-flex gap-3">
+                                                    <div class="btn-group">
+                                                        <a href="{% url 'appadmin:admin_view_user' username=user.username %}" class="btn btn-light rounded btn-sm font-sm" role="button">View User</a>
+                                                    </div>
+                                                    
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div> <!-- card-body .// -->
+                    </div> <!-- card .// -->
+                </div> <!-- .col // -->
+               
+            </div> <!-- .row // -->
+        </div> <!-- .container // -->
+    </div> <!-- content-header .// -->
+</section>
+
+
+
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base/admin_base.html' %}
+
+{% block content %}
+
+  <h2>Edit Subcategory</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="sub_name" class="form-label">Subcategory Name:</label>
+      <input type="text" id="sub_name" name="sub_name" value="{{ subcategory.sub_name }}" class="form-control mb-3" required>
+    </div>
+    <div class="mb-3">
+      <label for="category" class="form-label">Category:</label>
+      <select id="category" name="category" class="form-select" required>
+        {% for category in categories %}
+          <option value="{{ category.pk }}" {% if category.pk == subcategory.category.pk %}selected{% endif %}>{{ category.cname }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Save changes</button>
+    <a href="{% url 'appadmin:admin_subcategory' %}" class="btn btn-secondary">Cancel</a>
+  </form>
+{% endblock %}

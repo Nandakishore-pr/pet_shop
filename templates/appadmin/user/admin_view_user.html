@@ -1,0 +1,77 @@
+{% extends "base/admin_base.html" %}
+{% block content %}
+  <h2>User Details</h2>
+  <div class="container mt-4">
+    <dl class="row">
+      <dt class="col-sm-3">First Name:</dt>
+      <dd class="col-sm-9">{{ user.first_name }}</dd>
+
+      <dt class="col-sm-3">Last Name:</dt>
+      <dd class="col-sm-9">{{ user.last_name }}</dd>
+      
+      <dt class="col-sm-3">Username:</dt>
+      <dd class="col-sm-9">{{ user.username }}</dd>
+
+      <dt class="col-sm-3">Email:</dt>
+      <dd class="col-sm-9">{{ user.email }}</dd>
+    
+      <dt class="col-sm-3">Date Joined:</dt>
+      <dd class="col-sm-9">{{ user.date_joined }}</dd>
+      
+      <dt class="col-sm-3">Last Login:</dt>
+      <dd class="col-sm-9">{{ user.last_login }}</dd>
+      
+      <dt class="col-sm-3">Created Date:</dt>
+      <dd class="col-sm-9">{{ user.created_date }}</dd>
+      
+      <dt class="col-sm-3">Modified Date:</dt>
+      <dd class="col-sm-9">{{ user.modified_date }}</dd>
+     
+      <dt class="col-sm-3">Is Admin:</dt>
+      <dd class="col-sm-9">{{ user.is_admin }}</dd>
+     
+      <dt class="col-sm-3">Is Staff:</dt>
+      <dd class="col-sm-9">{{ user.is_staff }}</dd>
+      
+      <dt class="col-sm-3">Is Active:</dt>
+      <dd class="col-sm-9">{{ user.is_active }}</dd>
+
+      <dt class="col-sm-3">Is Superadmin:</dt>
+      <dd class="col-sm-9">{{ user.is_superadmin }}</dd>
+    </dl>
+
+    <!-- You can also include links to edit or delete the user -->
+    <div class="mt-3">
+      
+
+        
+        <p>
+          {% if not user.is_active %}
+            The user "{{ user.username }}" is currently blocked.
+          {% else %}
+            The user "{{ user.username }}" is currently unblocked.
+          {% endif %}
+        </p>
+      
+        <form method="post" action="{% url 'appadmin:block_unblock_user' username=user.username %}">
+          {% csrf_token %}
+          
+          <button type="submit" class="btn btn-danger">
+            {% if not user.is_active %}
+              Unblock User
+            {% else %}
+              Block User
+            {% endif %}
+          </button>
+        </form>
+      
+        <br>
+        <a href="{% url 'appadmin:admin_user'  %}" class="btn btn-secondary">Back to User Details</a>
+      
+        <!-- Provide the 'username' parameter for the 'admin_view_user' view -->
+        {% comment %} <a href="{% url 'appadmin:admin_view_user' username=user.username %}" class="btn btn-info">View User</a> {% endcomment %}
+    </div>
+    
+    
+  </div>
+{% endblock %}
