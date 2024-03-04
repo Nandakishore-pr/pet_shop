@@ -78,11 +78,11 @@ class Product(models.Model):
   def get_percentage(self):
     new_price = (self.price /self.old_price) * 100
     return new_price
-  
+
 
 
 class ProductImages(models.Model):
-  Images = models.ImageField(upload_to=user_directory_path, default = "product.jpg")
+  Images = models.ImageField(upload_to='product-images', default = "product.jpg")
   product = models.ForeignKey(Product, related_name="p_images", on_delete = models.SET_NULL,null =True)
   date = models.DateField(auto_now_add =True)
 
@@ -128,14 +128,14 @@ class Order(models.Model):
     PROCESSING = 'processing'
     SHIPPED = 'Shipped'
     DELIVERD = 'Delivered'
-    PENDING = 'Pending'
+    
     
     STATUS_CHOICES = [
         (CANCELED, 'Canceled'),
         (PROCESSING, 'Processing'),
         (SHIPPED, 'Shipped'),
         (DELIVERD, 'Delivered'),
-        (PENDING, 'Pending')
+        
     ]
 
 

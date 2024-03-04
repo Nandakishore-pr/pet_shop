@@ -87,6 +87,14 @@
 <div class="container">
     <div class="row">
         <div class="col-md-6 offset-md-3">
+            {% if messages %}
+            <div class="alert alert-dismissible {% if messages.tags %}{{ messages.tags }}{% endif %}">
+               
+                {% for message in messages %}
+                <strong>{{ message.tags }}</strong> {{ message }}
+                {% endfor %}
+            </div>
+            {% endif %}
             <div class="card mt-5">
                 <div class="card-header">
                     <h3>User Profile</h3>
@@ -167,7 +175,7 @@
                                         <span class="close">&times;</span>
                                         <!-- Edit Address Form -->
                                         {% comment %} action="{% url 'core:edit_address' address_id=address_id %}" {% endcomment %}
-                                        <form id="edit-address-form" method="post" >
+                                        <form id="edit-address-form" method="post"  >
                                             {% csrf_token %}
                                             <!-- Example: Populate the form fields with address details -->
                                             <input type="text" name="street_address" placeholder="Street Address" value="{{ address.street_address }}">
@@ -223,6 +231,7 @@
     </div>
   </div> {% endcomment %}
 
+ 
 <script>
     // Get the modal
     var modal = document.getElementById("add-address-modal");
@@ -270,7 +279,21 @@
             var modal = document.getElementById('edit-address-modal');
             modal.style.display = 'none';
         });
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+         // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
 </script> 
+
 
 
 {% endblock %}

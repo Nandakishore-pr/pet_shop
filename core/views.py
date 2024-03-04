@@ -117,56 +117,170 @@ def password_change(request):
 
 
 
+# @login_required
+# def edit_profile(request):
+#     user = request.user
+#     try:
+#         profile_instance = user.profile
+#     except Profile.DoesNotExist:
+#         # If profile doesn't exist, create one
+#         profile_instance = Profile.objects.create(user=user)
+
+#     # Get the address instance for the current user
+#     address_instance = None
+    
+#     try:
+#         address_instances = Address.objects.filter(user=user)
+#         address_instance = address_instances.first() if address_instances.exists() else None
+#     except Address.DoesNotExist:
+#         address_instance = None
+
+
+#     if request.method == 'POST':
+#         # Create form instances and populate them with data from the request
+#         profile_form = UserProfileForm(request.POST, instance=profile_instance)
+
+#         if address_instance:
+#             address_form = AddressForm(request.POST, instance=address_instance)
+#         else:
+#             address_form = AddressForm(request.POST)
+
+#         # Check if the forms are valid
+#         if profile_form.is_valid() and (not address_instance or address_form.is_valid()):
+#             # Save the form data to the database
+#             profile_form.save()
+#             address = address_form.save(commit=False)
+#             address.user = user  # Set the user for the address instance
+#             address.save()
+#             # Redirect to a success page
+#             return redirect('core:profile_view')  
+
+#     else:
+#         # If it's a GET request, create form instances with initial data
+#         profile_form = UserProfileForm(instance=profile_instance)
+#         if address_instance:
+#             address_form = AddressForm(instance=address_instance)
+#         else:
+#             address_form = AddressForm()
+
+#     context = {
+#         'profile_form': profile_form,
+#         'address_form': address_form,
+#         'has_address':address_instance is not None,
+#     }
+
+#     return render(request, 'core/edit_profile.html', context)
+
+
+
+# @login_required
+# def edit_profile(request):
+#     user = request.user
+#     try:
+#         profile = user.profile
+#     except Profile.DoesNotExist:
+#         profile = None
+
+#     if request.method == 'POST':
+#         user_form = UserProfileForm(request.POST, instance=user)
+#         if profile:
+#             profile_form = UserProfileForm(request.POST, instance=profile)
+#         else:
+#             profile_form = UserProfileForm(request.POST)
+
+#         if user_form.is_valid() and profile_form.is_valid():
+#             user_form.save()
+#             if profile:
+#                 profile_form.save()
+#             else:
+#                 profile = profile_form.save(commit=False)
+#                 profile.user = user
+#                 profile.save()
+#             messages.success(request, 'Your profile has been updated successfully!')
+#             return redirect('core:profile_view')  # Redirect to user's profile page
+#         else:
+#             messages.error(request, 'Please correct the errors below.')
+
+#     else:
+#         user_form = UserProfileForm(instance=user)
+#         if profile:
+#             profile_form = UserProfileForm(instance=profile)
+#         else:
+#             profile_form = UserProfileForm()
+
+#     context = {
+#         'user_form': user_form,
+#         'profile_form': profile_form
+#     }
+
+#     return render(request, 'core/edit_profile.html', context)
+
+
+
+
 @login_required
 def edit_profile(request):
     user = request.user
     try:
-        profile_instance = user.profile
+        profile = user.profile
     except Profile.DoesNotExist:
-        # If profile doesn't exist, create one
-        profile_instance = Profile.objects.create(user=user)
+        profile = None
 
-    # Get the address instance for the current user
-    address_instance = None
-    
-    try:
-        address_instances = Address.objects.filter(user=user)
-        address_instance = address_instances.first() if address_instances.exists() else None
-    except Address.DoesNotExist:
-        address_instance = None
-
+    # Check if the user has any addresses
+    has_address = user.address_set.exists()
 
     if request.method == 'POST':
-        # Create form instances and populate them with data from the request
-        profile_form = UserProfileForm(request.POST, instance=profile_instance)
-
-        if address_instance:
-            address_form = AddressForm(request.POST, instance=address_instance)
+        user_form = UserProfileForm(request.POST, instance=user)
+        if profile:
+            profile_form = UserProfileForm(request.POST, instance=profile)
         else:
-            address_form = AddressForm(request.POST)
+            profile_form = UserProfileForm(request.POST)
 
-        # Check if the forms are valid
-        if profile_form.is_valid() and (not address_instance or address_form.is_valid()):
-            # Save the form data to the database
-            profile_form.save()
-            address = address_form.save(commit=False)
-            address.user = user  # Set the user for the address instance
-            address.save()
-            # Redirect to a success page
-            return redirect('core:profile_view')  
+        # Handle address form submission
+        if not has_address:
+            address_form = AddressForm(request.POST)
+            if address_form.is_valid():
+                address = address_form.save(commit=False)
+                address.user = user
+                address.save()
+                messages.success(request, 'Address added successfully!')
+                return redirect('core:profile_view')  # Redirect to user's profile page
+            else:
+                messages.error(request, 'Please correct the errors below.')
+        else:
+            address_form = None
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            if profile:
+                profile_form.save()
+            else:
+                profile = profile_form.save(commit=False)
+                profile.user = user
+                profile.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('core:profile_view')  # Redirect to user's profile page
+        else:
+            messages.error(request, 'Please correct the errors below.')
 
     else:
-        # If it's a GET request, create form instances with initial data
-        profile_form = UserProfileForm(instance=profile_instance)
-        if address_instance:
-            address_form = AddressForm(instance=address_instance)
+        user_form = UserProfileForm(instance=user)
+        if profile:
+            profile_form = UserProfileForm(instance=profile)
         else:
+            profile_form = UserProfileForm()
+
+        if not has_address:
             address_form = AddressForm()
+        else:
+            address_form = None
 
     context = {
+        'user_form': user_form,
         'profile_form': profile_form,
         'address_form': address_form,
-        'has_address':address_instance is not None,
+        'form': user_form,
+        'form':address_form
     }
 
     return render(request, 'core/edit_profile.html', context)
@@ -175,12 +289,14 @@ def edit_profile(request):
 
 def add_address(request):
     if request.method == 'POST':
+        
         # Extract address data from the form
         street_address = request.POST.get('street_address')
         city = request.POST.get('city')
         state = request.POST.get('state')
         postal_code = request.POST.get('postal_code')
         country = request.POST.get('country')
+        print(street_address)
 
         # Assuming 'Address' is the model for storing addresses
         # Create a new address object and save it to the database
@@ -220,7 +336,7 @@ def edit_address(request, address_id):
     context = {
         'form':form,
         'address':address,
-        'address_id':address_id
+        'address_id':address_id,
     }
     return render(request, 'core/edit_address.html', context)
 

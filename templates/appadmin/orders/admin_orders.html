@@ -17,16 +17,19 @@
                                 <br>
                                 
                                 <div class="table-responsive">
+                                    
+
                                     <table class="table table-hover table-bordered" style="border-color: black;">
                                         <thead>
                                             <tr>
                                                 <!-- Your table headers here -->
                                                 <th>User</th>
                                                 <th>Order ID</th>
-                                                <th>Total Amount</th>
                                                 <th>Shipping Address</th>
-                                                <th>order items</th>
-                                                <th>Status</th>
+                                                <th>Order Items</th>
+                                                <th>Total Amount</th>
+                                                {% comment %} <th>Status</th> {% endcomment %}
+                                                <th>Update Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -35,7 +38,6 @@
                                                     <tr>
                                                         <td>{{ username }}</td>
                                                         <td>{{ order.order_id }}</td>
-                                                        <td>${{ order.total_amount }}</td>
                                                         <td>{{ order.shipping_address }}</td>
                                                         <td>
                                                             <ul>
@@ -44,15 +46,23 @@
                                                                 {% endfor %}
                                                             </ul>
                                                         </td>
+                                                        <td>${{ order.total_amount }}</td>
+                                                        {% comment %} <td>{{order_info.status}}</td> {% endcomment %}
                                                         <td>
+                                                            
                                                             <form method="POST" action="{% url 'appadmin:update_order_status' order.order_id %}">
                                                                 {% csrf_token %}
-                                                                <select name="status">
-                                                                    {% for value, label in order.STATUS_CHOICES %}
-                                                                        <option value="{{ value }}" {% if order.status == value %} selected {% endif %}>{{ label }}</option>
-                                                                    {% endfor %}
-                                                                </select>
+                                                          
+                                                            <select name="product_status" default="select" id="product_status" {% if order.status == 'cancelled' %}disabled{% endif %}>
+                                                                {% comment %} <option value="select" >------</option> {% endcomment %}
                                                                 
+                                                                <option value="processing" {% if o.product_status == 'processing' %}selected{% endif %}>Processing</option>
+                                                                <option value="shipped" {% if o.product_status == 'shipped' %}selected{% endif %}>Shipped</option>
+                                                                <option value="delivered" {% if o.product_status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                                                <option value="cancelled" {% if o.product_status == 'cancelled' %}selected{% endif %}>cancelled</option>
+                                                                <!-- Add other options as needed -->
+                                                               
+                                                            </select>
                                                                 <button type="submit" class="btn btn-primary">Update Status</button>
                                                             </form>
                                                         </td>
@@ -60,7 +70,6 @@
                                                 {% endfor %}
                                             {% endfor %}
                                         </tbody>
-                                        
                                     </table>
                                 </div>
                             </div> <!-- card-body .// -->
@@ -71,7 +80,6 @@
             </div> <!-- .container // -->
         </div> <!-- content-header .// -->
     </section>
-
 
 
     {% endblock %}

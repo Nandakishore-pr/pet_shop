@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect,HttpResponseBadRequest
 from django.contrib import messages
 from django.contrib.auth import logout,login,get_user_model
 from django.views.decorators.cache import never_cache
@@ -10,7 +10,7 @@ from core.models import Category,Product,ProductImages,Subcategory,Order,OrderIt
 from account.models import User
 from django.contrib.auth.decorators import login_required
 
-from account.models import UserManager
+
 
 # Create your views here.
 
@@ -329,27 +329,70 @@ def admin_order(request):
                 'order_id': order.id,
                 'total_amount': order.total_amount,
                 'shipping_address': order.shipping_address,
-                'order_items': order_items
+                'order_items': order_items,
+                'status': order.status
             }
             user_order_details.append(order_info)
         
         order_details[user.username] = user_order_details
     
+    status_choices = dict(Order.STATUS_CHOICES)
+
     context = {
-        'order_details': order_details
+        'order_details': order_details,
+        'status_choices': status_choices 
     }
 
-        # Print status choices
-    for choice in Order.STATUS_CHOICES:
-        print(choice)
-        
+
     return render(request, 'appadmin/orders/admin_orders.html', context)
 
 
 def update_order_status(request, order_id):
     if request.method == 'POST':
-        new_status = request.POST.get('status')
+        new_status = request.POST.get('product_status')
         order = Order.objects.get(id=order_id)
+        
+        # Check if the order has already been canceled
+        if order.status == 'cancelled':
+            return HttpResponseBadRequest("Cannot update status for a canceled order.")
+        
+        # Proceed with updating the status for non-canceled orders
         order.status = new_status
         order.save()
-    return redirect('appadmin:admin_order')
+        return redirect('appadmin:admin_order')
+    else:
+        return HttpResponseBadRequest("Only POST requests are allowed for this view.")
+
+
+
+
+# def update_order_status(request, order_id):
+#     if request.method == 'POST':
+#         new_status = request.POST.get('product_status')
+#         order = Order.objects.get(id=order_id)
+#         order.status = new_status
+#         order.save()
+#     return redirect('appadmin:admin_order')
+
+
+# def admin_order(request):
+#     # Retrieve orders for the current user
+#     user_orders = Order.objects.filter(user=request.user)
+
+#     context = {
+#         'user_orders': user_orders
+#     }
+
+#     return render(request, 'appadmin/orders/admin_orders.html', context)
+
+# @login_required
+# def update_order_status(request, order_id):
+#     order = get_object_or_404(Order, id=order_id)
+#     if request.method == 'POST':
+#         new_status = request.POST.get('new_status')
+#         if new_status in dict(Order.STATUS_CHOICES):
+#             order.status = new_status
+#             order.save()
+#             return redirect('appadmin:admin_order')
+#     # context = {'order': order}
+#     return redirect('appadmin:admin_order')

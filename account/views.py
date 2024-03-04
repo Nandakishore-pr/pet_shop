@@ -65,7 +65,7 @@ def  otp_verification(request):
         nameuser.save()
         messages.info(request,'signed in successfully...')
         User.is_active=True 
-        return redirect('core:index')
+        return redirect('account:login')
     else:
         messages.error(request,"otp doesn't match")
         return render(request,'account/otp.html')

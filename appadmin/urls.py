@@ -21,6 +21,6 @@ urlpatterns = [
     path("admin_user/",views.admin_user,name='admin_user'),
     path('admin_view_user/<str:username>/',views.admin_view_user,name = 'admin_view_user'),
     path('block_unblock_user/<str:username>/', views.block_unblock_user, name='block_unblock_user'),
-    path('admin_order',views.admin_order,name='admin_order'),
+    path('admin_order/',views.admin_order,name='admin_order'),
     path('update_order_status/<int:order_id>/',views.update_order_status,name='update_order_status'),
 ]
