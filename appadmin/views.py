@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import login_required
 
 
 
+
 # Create your views here.
 
 
@@ -191,6 +192,7 @@ def admin_add_product(request):
         
         product = Product.objects.create(
                 title=title,
+                image=image[0],
                 description=description,
                 price=price,
                 category=category,
@@ -226,6 +228,8 @@ def admin_add_product(request):
 
 
 
+
+
 def admin_edit_product(request, pid):
     product = get_object_or_404(Product, pid=pid)
     product_images = ProductImages.objects.filter(product=product)
@@ -239,7 +243,7 @@ def admin_edit_product(request, pid):
         product.stock = request.POST.get('stock', product.stock)
         product.specifications = request.POST.get('specifications', product.specifications)
         product.category_id = request.POST.get('category')
-        product.sub_category_id = request.POST.get('sub_category')
+        product.sub_category_id = request.POST.get('subcategory')
         # Handle image update
         new_image = request.FILES.get('image')
         print(new_image)

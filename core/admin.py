@@ -1,9 +1,5 @@
 from django.contrib import admin
-from django.utils.html import mark_safe
-from django.conf import settings
-from django.contrib.auth import get_user_model
-
-
+from django.utils.safestring import mark_safe
 from core.models import Category,Subcategory,Product,ProductImages
 # Register your models here.
 
@@ -14,8 +10,16 @@ class ProductImagesAdmin(admin.TabularInline):
   
 class ProductAdmin(admin.ModelAdmin):
   inlines = [ProductImagesAdmin]
-  list_display = ['pid','title','product_image','price','category','sub_category','featured','latest','status','stock',]
-
+  list_display = ['pid','title','display_image','price','category','sub_category','featured','latest','status','stock',]
+  
+  
+  def display_image(self, obj):
+        if obj.image:  # Assuming 'image' is the field storing the image URL
+            return mark_safe('<img src="{}" width="50" height="50" />'.format(obj.image.url))
+        else:
+            return "No Image"
+  display_image.allow_tags = True
+  display_image.short_description = 'Image'
 
 
 class CategoryAdmin(admin.ModelAdmin):

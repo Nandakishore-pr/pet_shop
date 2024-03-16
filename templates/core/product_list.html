@@ -14,15 +14,14 @@
             <div class="col-lg-3 col-md-5">
                 <div class="sidebar">
                     <div class="sidebar__item">
-                        {% if not subcategory %}
+                        {% if subcategories %}
                         <h4>Category</h4>
-                        {% endif %}
                                     <ul>
-                                        {% for subcategory in category.sub_cat.all %}
+                                        {% for subcategory in subcategories %}
                                             <li><a href="{% url 'core:product_list_by_subcategory' subcategory.sid %}">{{ subcategory.sub_name }}</a></li>
                                         {% endfor %}
                                     </ul>
-    
+                        {% endif %}
                     </div>
                     <div class="sidebar__item">
                         <h4>Price</h4>

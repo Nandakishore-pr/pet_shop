@@ -99,7 +99,7 @@ class AddressForm(forms.ModelForm):
     class Meta:
         model = Address
         fields = ['street_address', 'city', 'state', 'postal_code', 'country', 'is_default']  # Add or remove fields as needed
-
+        
 
     def clean_street_address(self):
         street_address = self.cleaned_data.get('street_address')

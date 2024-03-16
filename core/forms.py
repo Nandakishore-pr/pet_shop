@@ -11,3 +11,8 @@ class AddressSelectionForm(forms.Form):
 
 class PaymentOptionForm(forms.Form):
     payment_option = forms.ChoiceField(choices=[('credit_card', 'Credit Card'), ('paypal', 'PayPal'), ('bank_transfer', 'Bank Transfer'),('cash_on_delivery','cash on delivery')])
+
+
+
+class ProductSearchForm(forms.Form):
+    query = forms.CharField(label='Search', max_length=100)

@@ -2,56 +2,71 @@
 {% load static %}
 
 {% block content %}
-    <h2>Wishlist</h2>
-    {% if wishlist_items %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Image</th>
-                    <th>Title</th>
-                    <th>Price</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in wishlist_items %}
+    <div class="wishlist-container">
+        <h2 style = 'text-align:center'>Wishlist</h2>
+        {% if wishlist_item %}
+            <table class="table">
+                <thead>
                     <tr>
-                        <td><img src="{{ item.product.image.url }}" alt="{{ item.product.title }}" width="50"></td>
-                        <td>{{ item.product.title }}</td>
-                        <td>${{ item.product.price }}</td>
-                        <td>
-                            <button class="btn btn-danger" onclick="removeFromWishlist('{{ item.id }}')">Remove</button>
-                        </td>
+                        <th>Image</th>
+                        <th>Title</th>
+                        <th>Price</th>
+                        <th>Action</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Your wishlist is empty.</p>
-    {% endif %}
+                </thead>
+                <tbody>
+                    {% for item in wishlist_item %}
+                        <tr>
+                            <td><img src="{{ item.product.image.url }}" alt="{{ item.product.title }}" width="50"></td>
+                            <td>{{ item.product.title }}</td>
+                            <td>${{ item.product.price }}</td>
+                            <td>
+                                <button class="btn btn-danger" onclick="removeFromWishlist('{{ item.id }}')">Remove</button>
+
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Your wishlist is empty.</p>
+        {% endif %}
+    </div>
+
+    
+
+    <style>
+        .wishlist-container {
+            margin: 0 auto;
+            width: 40%; /* Adjust width as needed */
+        }
+    </style>
 
     <script>
         function removeFromWishlist(itemId) {
+            // Send AJAX request to remove item from wishlist
             fetch(`/remove_from_wishlist/${itemId}/`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
                 }
             })
             .then(response => {
                 if (response.ok) {
-                    // Item removed successfully
-                    // You can update the UI or perform any other actions here
-                    window.location.reload(); // Reload the page to reflect changes
+                    // Remove the item from the DOM if the request is successful
+                    const itemElement = document.getElementById(`item-${itemId}`);
+                    if (itemElement) {
+                        itemElement.remove();
+                        
+                    }
                 } else {
-                    // Handle error
                     console.error('Failed to remove item from wishlist');
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                // Handle error
-            });
+            .catch(error => console.error('Error:', error));
         }
     </script>
+
+
 {% endblock %}

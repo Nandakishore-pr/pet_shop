@@ -8,7 +8,9 @@ from django.contrib.auth import update_session_auth_hash
 from account.forms import  UserProfileForm,AddressForm
 from account.models import Profile,Address,User
 from django.http import HttpResponseBadRequest,JsonResponse
-from core.forms import AddressSelectionForm,PaymentOptionForm
+from core.forms import AddressSelectionForm,PaymentOptionForm,ProductSearchForm
+import json
+from django.views.decorators.http import require_POST
 
 
 # Create your views here.
@@ -75,12 +77,10 @@ def product_list_by_subcategory(request, subcategory_sid):
     return render(request, 'core/product_list.html', context)
 
 
-
-
 def product_detail(request,product_pid):
     product = get_object_or_404(Product, pid=product_pid)
     product_images = ProductImages.objects.filter(product=product)
-
+    print(product_images)
 
     context = {
         'product': product,
@@ -90,6 +90,52 @@ def product_detail(request,product_pid):
 
     return render(request, 'core/product_detail.html',context)
 
+
+def all_products(request, category_id=None):
+    # Fetch all categories
+    categories = Category.objects.all()
+
+    # Get the selected category if provided
+    selected_category = None
+    if category_id:
+        selected_category = get_object_or_404(Category, id=category_id)
+
+    # Filter products based on the selected category
+    products = Product.objects.all()
+    if selected_category:
+        products = products.filter(category=selected_category)
+
+    # Get the minimum and maximum price values from the request
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+
+    # Filter products based on the price range
+    if min_price and max_price:
+        # Assuming price is a field in the Product model
+        products = products.filter(price__gte=min_price, price__lte=max_price)
+
+    context = {
+        'products': products,
+        'categories': categories,
+        'selected_category': selected_category,
+    }
+    return render(request, 'core/all_products.html', context)
+
+
+# def sort_by_category(request,category_id):
+#     categories = Category.objects.all()  # Fetch all categories
+#     selected_category = get_object_or_404(Category,id=category_id)
+
+#     products = Product.objects.filter(category = selected_category)
+    
+
+#     context = {
+#         'products': products,
+#         'categories': categories,
+#         'selected_category': selected_category,  # Pass selected category ID to template
+#     }
+
+#     return render(request,'core/all_products.html',context)
 
 def profile_view(request):
     user = request.user
@@ -296,7 +342,7 @@ def add_address(request):
         state = request.POST.get('state')
         postal_code = request.POST.get('postal_code')
         country = request.POST.get('country')
-        print(street_address)
+        
 
         # Assuming 'Address' is the model for storing addresses
         # Create a new address object and save it to the database
@@ -308,7 +354,7 @@ def add_address(request):
             postal_code=postal_code,
             country=country
         )
-
+        
     return redirect('core:profile_view')
 
 
@@ -431,29 +477,40 @@ def increase_quantity(request, cart_item_id):
 
 def wishlist(request):
     wishlist_item = WishlistItem.objects.filter(user=request.user)
+
     return render (request,'core/wishlist.html',{'wishlist_item':wishlist_item})
 
 
 
-# def add_to_wishlist(request):
-#     if request.method == 'POST':
-#         data = json.loads(request.body)
-#         product_pid = data.get('product_pid')
-#         if product_pid is None:
-#             return JsonResponse({'error': 'Product PID is required'}, status=400)
-        
-#         product = get_object_or_404(Product, pid=product_pid)
-#         # Check if the product is already in the user's wishlist
-#         if WishlistItem.objects.filter(user=request.user, product=product).exists():
-#             # Product already exists in the wishlist, return a message
-#             return JsonResponse({'message': 'Item already in the wishlist'}, status=400)
-#         else:
-#             # Add the product to the user's wishlist
-#             WishlistItem.objects.create(user=request.user, product=product)
-#             return JsonResponse({'message': 'Item added to wishlist successfully'}, status=200)
-#     else:
-#         # Handle invalid requests
-#         return JsonResponse({'error': 'Invalid request method'}, status=400)
+def add_to_wishlist(request,product_pid):
+    if request.method == 'POST':
+        # Get the product based on the provided PID
+        product = get_object_or_404(Product, pid=product_pid)
+
+        # Check if the product is already in the user's wishlist
+        if WishlistItem.objects.filter(user=request.user, product=product).exists():
+            # Product already exists in the wishlist, return a message
+            return JsonResponse({'message': 'Item already in the wishlist'}, status=400)
+        else:
+            # Add the product to the user's wishlist
+            WishlistItem.objects.create(user=request.user, product=product)
+            return JsonResponse({'message': 'Item added to wishlist successfully'}, status=200)
+    else:
+        # Handle invalid requests
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
+@require_POST
+def remove_from_wishlist(request, item_id):
+    # Get the wishlist item
+    wishlist_item = get_object_or_404(WishlistItem, id=item_id, user=request.user)
+    
+    # Delete the wishlist item
+    wishlist_item.delete()
+    
+    # Return success response
+    return JsonResponse({'message': 'Item removed from wishlist successfully'}, status=200)
+    
 
 
 # def checkout_view(request):
@@ -482,6 +539,86 @@ def wishlist(request):
 #     return render(request, 'core/checkout.html', context)
 
 
+# @login_required
+# def checkout_view(request):
+#     user = request.user
+#     user_addresses = Address.objects.filter(user=user)
+#     user_cart = Cart.objects.filter(user=user).first()
+
+#     total_cart_price = 0
+#     cart_items = []
+#     if user_cart:
+#         cart_items = user_cart.items.all()
+#         # Calculate the total price of all cart items
+#         total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
+
+#     address_form = AddressSelectionForm(user=user)
+#     payment_form = PaymentOptionForm()
+
+#     if request.method == 'POST':
+#         street_address = request.POST.get('street_address')
+#         city = request.POST.get('city')
+#         state = request.POST.get('state')
+#         postal_code = request.POST.get('postal_code')
+#         country = request.POST.get('country')
+
+#         address = Address.objects.create(
+#             user=user,
+#             street_address=street_address,
+#             city=city,
+#             state=state,
+#             postal_code=postal_code,
+#             country=country
+#         )
+
+#         if address:
+#             return JsonResponse({'success':True,'address_id':address.id})
+#         else:
+#             return JsonResponse({'success':False,'error':'Failed to create new'})
+        
+
+#     if request.method == 'POST':
+#         address_form = AddressSelectionForm(user=user, data=request.POST)
+#         payment_form = PaymentOptionForm(request.POST)
+#         if address_form.is_valid() and payment_form.is_valid():
+#             shipping_address_id = address_form.cleaned_data['shipping_address'].id
+#             payment_option = payment_form.cleaned_data['payment_option']
+
+#             # Create a new order instance
+#             order = Order.objects.create(
+#                 user=user,
+#                 total_amount=total_cart_price,
+#                 shipping_address_id=shipping_address_id
+#             )
+
+#             # Create order items for each cart item
+#             for cart_item in cart_items:
+#                 OrderItem.objects.create(
+#                     order=order,
+#                     product=cart_item.product,
+#                     quantity=cart_item.quantity
+#                 )
+
+#             # Clear the user's cart after placing the order
+#             for item in user_cart.items.all():
+#                 item.delete()
+
+#             # Redirect to the order placed page
+#             return redirect('core:order_placed')
+#         else:
+#             messages.error(request, "Please fill in all the required fields.")
+
+#     context = {
+#         'address_form': address_form,
+#         'payment_form': payment_form,
+#         'total_cart_price': total_cart_price,
+#         'cart_items': cart_items,
+#     }
+
+#     return render(request, 'core/checkout.html', context)
+
+
+
 @login_required
 def checkout_view(request):
     user = request.user
@@ -499,35 +636,31 @@ def checkout_view(request):
     payment_form = PaymentOptionForm()
 
     if request.method == 'POST':
-        address_form = AddressSelectionForm(user=user, data=request.POST)
-        payment_form = PaymentOptionForm(request.POST)
-        if address_form.is_valid() and payment_form.is_valid():
-            shipping_address_id = address_form.cleaned_data['shipping_address'].id
-            payment_option = payment_form.cleaned_data['payment_option']
+        street_address = request.POST.get('street_address')
+        city = request.POST.get('city')
+        state = request.POST.get('state')
+        postal_code = request.POST.get('postal_code')
+        country = request.POST.get('country')
 
-            # Create a new order instance
-            order = Order.objects.create(
-                user=user,
-                total_amount=total_cart_price,
-                shipping_address_id=shipping_address_id
-            )
+        address = Address.objects.create(
+            user=user,
+            street_address=street_address,
+            city=city,
+            state=state,
+            postal_code=postal_code,
+            country=country
+        )
 
-            # Create order items for each cart item
-            for cart_item in cart_items:
-                OrderItem.objects.create(
-                    order=order,
-                    product=cart_item.product,
-                    quantity=cart_item.quantity
-                )
+        # if address:
+        #     # Continue with the checkout process if the address is successfully created
+            
 
-            # Clear the user's cart after placing the order
-            for item in user_cart.items.all():
-                item.delete()
-
-            # Redirect to the order placed page
-            return redirect('core:order_placed')
-        else:
-            messages.error(request, "Please fill in all the required fields.")
+        #         # Redirect to the order placed page
+        #         return redirect('core:order_placed')
+        #     else:
+        #         messages.error(request, "Please fill in all the required fields.")
+        # else:
+        #     return JsonResponse({'success': False, 'error': 'Failed to create new address'})
 
     context = {
         'address_form': address_form,
@@ -538,7 +671,44 @@ def checkout_view(request):
 
     return render(request, 'core/checkout.html', context)
 
+
+
+
 def order_placed(request):
+    user = request.user
+    user_cart = Cart.objects.filter(user=user).first()
+    if user_cart:
+        cart_items = user_cart.items.all()
+        # Calculate the total price of all cart items
+        total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
+
+    address_form = AddressSelectionForm(user=user)
+    payment_form = PaymentOptionForm()
+
+    address_form = AddressSelectionForm(user=user, data=request.POST)
+    payment_form = PaymentOptionForm(request.POST)
+    if address_form.is_valid() and payment_form.is_valid():
+        shipping_address_id = address_form.cleaned_data['shipping_address'].id
+        payment_option = payment_form.cleaned_data['payment_option']
+
+                # Create a new order instance
+        order = Order.objects.create(
+                    user=user,
+                    total_amount=total_cart_price,
+                    shipping_address_id=shipping_address_id
+                )
+
+                # Create order items for each cart item
+        for cart_item in cart_items:
+            OrderItem.objects.create(
+                        order=order,
+                        product=cart_item.product,
+                        quantity=cart_item.quantity
+                    )
+
+                # Clear the user's cart after placing the order
+        for item in user_cart.items.all():
+                    item.delete()
     return render(request, 'core/order_placed.html')
 
 
@@ -577,3 +747,14 @@ def orders(request):
     return render(request, 'core/orders.html', context)
 
 
+
+def search_view(request):
+    form = ProductSearchForm(request.GET)
+    products = []
+
+    if form.is_valid():
+        query = form.cleaned_data['query']
+        # Perform search logic here, e.g., filtering products based on the query
+        products = Product.objects.filter(title__icontains=query)
+
+    return render(request, 'core/search_result.html', {'form': form, 'products': products})

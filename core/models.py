@@ -5,12 +5,24 @@ from account.models import User,Address
 # Create your models here.
 
 
-def user_directory_path(instance, filename):
-    if instance.user and instance.user.id:
-        return 'user_{0}/{1}'.format(instance.user.id, filename)
+# def user_directory_path(instance, filename):
+#     if instance.user and instance.user.id:
+#         return 'user_{0}/{1}'.format(instance.user.id, filename)
+#     else:
+#         # Handle the case when user or user.id is None
+#         return 'user_unknown/{0}'.format(filename)
+
+
+def generic_directory_path(instance,filename):
+    model_name = instance.__class__.__name__.lower()
+
+    pk = instance.pid if hasattr(instance,'pid') else None
+
+    if pk:
+        return f'{model_name}_{pk}/{filename}'
     else:
-        # Handle the case when user or user.id is None
-        return 'user_unknown/{0}'.format(filename)
+        return f'{model_name}_unknown/{filename}'
+    
 
 
 class Category(models.Model):
@@ -41,17 +53,17 @@ class Subcategory(models.Model):
 
 class Product(models.Model):
   pid = models.BigAutoField(unique =True,primary_key = True)
-  user = models.ForeignKey(User, on_delete = models.CASCADE,null =True)
+#   user = models.ForeignKey(User, on_delete = models.CASCADE,null =True)
   category = models.ForeignKey(Category, on_delete = models.CASCADE,null = True, related_name ="category")
   sub_category = models.ForeignKey(Subcategory, on_delete = models.CASCADE,null = True, related_name ="sub_category")
   title = models.CharField(max_length = 100,default = "product")
-  image = models.ImageField(upload_to=user_directory_path, default = "product.jpg")
-  description = models.TextField(null =True, blank =True, default = "This is the product")
+  image = models.ImageField(upload_to= generic_directory_path, default = "product.jpg")
+  description = models.TextField(max_length = 400,null =True, blank =True, default = "This is the product")
   
   price = models.DecimalField(max_digits =10, decimal_places =2, default = 1.99 )
   old_price = models.DecimalField(max_digits =10, decimal_places =2, default = 2.99)
   stock = models.IntegerField(default=1)
-  specifications = models.TextField(null =True, blank =True)
+  specifications = models.TextField(max_length = 400,null =True, blank =True)
   # tags = models.ForeignKey(Tags, on_delete = models.SET_NULL, null =True)
   
   
@@ -80,11 +92,13 @@ class Product(models.Model):
     return new_price
 
 
-
 class ProductImages(models.Model):
-  Images = models.ImageField(upload_to='product-images', default = "product.jpg")
+  image = models.ImageField(upload_to=generic_directory_path, default = "product.jpg")
   product = models.ForeignKey(Product, related_name="p_images", on_delete = models.SET_NULL,null =True)
   date = models.DateField(auto_now_add =True)
+
+
+
 
 
 class Cart(models.Model):

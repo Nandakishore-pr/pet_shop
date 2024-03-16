@@ -115,14 +115,7 @@
                     <nav class="header__menu">
                         <ul>
                             <li class="active"><a href="{% url "core:index" %}">Home</a></li>
-                            <li><a href="./shop-grid.html">Shop by brand</a>
-                                <ul class="header__menu__dropdown">
-                                    <li><a href="./shop-details.html">Royal canine</a></li>
-                                    <li><a href="./shoping-cart.html">Peigree</a></li>
-                                    <li><a href="./checkout.html">Drools</a></li>
-                                    <li><a href="./blog-details.html">Meo</a></li>
-                                </ul>
-                            </li>
+                            <li><a href="{% url "core:all_products" %}">Shop products</a></li>
                             <li><a href="#">Shop by pets</a>
                                 <ul class="header__menu__dropdown">
                                     {% for category in categories %}
@@ -161,8 +154,8 @@
         </div>
         <div class="hero__search search">
             <div class="hero__search__form">
-                <form action="#">
-                    <input type="text" placeholder="What do you need?">
+                <form action="{% url "core:search_view" %}" method = "GET">
+                    <input type="text" placeholder="What do you need?" name='query'>
                     <button type="submit" class="site-btn">SEARCH</button>
                 </form>
             </div>

@@ -54,7 +54,7 @@
                         <form method="post" action="{% url 'core:orders' %}">
                             {% csrf_token %}
                             <input type="hidden" name="order_id" value="{{ order.id }}">
-                            <button type="submit" class="btn btn-primary" {% if order.status == 'cancelled' %}disabled{% endif %}>Cancel Order</button>
+                            <button type="submit" class="btn btn-primary" {% if order.status == 'cancelled' or  order.status == 'delivered' %}disabled{% endif %}>Cancel Order</button>
                         </form>
                     </td>
                     <td>{{ order.status}}</td>

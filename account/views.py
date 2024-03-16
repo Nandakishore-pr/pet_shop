@@ -2,9 +2,9 @@ from django.shortcuts import render,redirect,get_object_or_404
 from django.views.decorators.cache import never_cache
 from .forms import SignUpForm
 from django.contrib.auth import login,authenticate,logout
-
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages,auth
-
+from django.contrib.auth import update_session_auth_hash
 from account.models import User
 
 import random
@@ -110,6 +110,3 @@ def logoutUser(request):
 
 def index(request):
     return render (request,'index.html')
-
-
-

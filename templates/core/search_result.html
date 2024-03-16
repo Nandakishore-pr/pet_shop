@@ -1,0 +1,31 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+{% if products %}
+<div class="row">
+    {% for product in products %}
+        <div class="col-lg-4 col-md-6 col-sm-6"  style="cursor: pointer;">
+            <div class="product__item" onclick="window.location='{% url 'core:product_detail' product_pid=product.pid %}';">
+                <div class="product__item__pic set-bg" data-setbg="{{ product.image.url }}">
+                    <ul class="product__item__pic__hover">
+                        <li><a href="#"><i class="fa fa-heart"></i></a></li>
+                        <li><a href="#"><i id="add-to-cart-btn" class="fa fa-shopping-cart"></i></a></li>
+                    </ul>
+                </div>
+                <div class="product__item__text">
+                    <h6>{{ product.title }}</h6>
+                    <h5>{{ product.price }}</h5>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% else %}
+    <p>No results found.</p>
+{% endif %}
+
+{% endblock %}
