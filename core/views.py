@@ -13,6 +13,11 @@ import json
 from django.views.decorators.http import require_POST
 
 
+from django.urls import reverse
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from paypal.standard.forms import PayPalPaymentsForm
+
 # Create your views here.
 
 def get_common_context():
@@ -437,43 +442,120 @@ def add_to_cart(request):
     return HttpResponseBadRequest("Invalid request")
 
 
+@require_POST
 def remove_from_cart(request, cart_item_id):
-    if request.method == 'POST':
-        cart_item = get_object_or_404(CartItem, pk=cart_item_id)
-        cart_item.delete()
-        return JsonResponse({'message': 'Item removed from cart successfully'}, status=200)
-    else:
-        return JsonResponse({'error': 'Invalid request method'}, status=400)
+    
+    cart_item = get_object_or_404(CartItem, pk=cart_item_id)
+    cart_item.delete()
+    return JsonResponse({'message': 'Item removed from cart successfully'}, status=200)
     
 
-def decrease_quantity(request, cart_item_id):
-    cart_item = get_object_or_404(CartItem, pk=cart_item_id)
 
+
+def decrease_quantity(request, cart_item_id,cart_id):
+    cart_item = get_object_or_404(CartItem, pk=cart_item_id)
+    
     if cart_item.quantity > 1:
         cart_item.quantity -= 1
         cart_item.save()
         
-        # Update total price
-        cart_item.total_price = cart_item.product.price * cart_item.quantity
-        cart_item.save()
+        print(cart_item.quantity)
 
-        return JsonResponse({'quantity': cart_item.quantity}, status=200)
+        # Update total price
+        total_price = cart_item.product.price * cart_item.quantity
+        cart_item.save()
+        print(total_price)
+
+        all_products = CartItem.objects.filter(cart_id=cart_id)
+
+        total_quantity = 0
+        total = 0
+
+        for cart_item in all_products:
+            total_quantity += cart_item.quantity
+            total += cart_item.product.price * cart_item.quantity
+            print(total)
+
+        return JsonResponse({'quantity': cart_item.quantity,'total':total_price,'total_sum':total}, status=200)
     else:
         return JsonResponse({'error': 'Quantity cannot be less than 1'}, status=400)
     
     
-def increase_quantity(request, cart_item_id):
+def increase_quantity(request, cart_item_id,cart_id):
     cart_item = get_object_or_404(CartItem, pk=cart_item_id)
-
+    
     # Increase the quantity
-    cart_item.quantity += 1
-    cart_item.save()
+    if cart_item.quantity >= 1:
+        cart_item.quantity += 1
+        cart_item.save()
+        print(cart_item.quantity)
     
     # Update total price
-    cart_item.total_price = cart_item.product.price * cart_item.quantity
-    cart_item.save()
+        total_price = cart_item.product.price * cart_item.quantity
+        cart_item.save()
 
-    return JsonResponse({'quantity': cart_item.quantity}, status=200)
+        all_products = CartItem.objects.filter(cart_id=cart_id)
+
+        total_quantity = 0
+        total = 0
+
+        for cart_i in all_products:
+            total_quantity += cart_i.quantity
+            total += cart_i.product.price * cart_item.quantity
+
+        print(total)
+        print(total_quantity)
+        print(cart_item.quantity)
+        return JsonResponse({'q': cart_item.quantity , 'total':total_price,'total_sum':total}, status=200)
+    else:
+        return JsonResponse({'error': 'Quantity cannot be less than 1'}, status=400)
+
+
+
+# def decrease_quantity(request, cart_item_id):
+#     cart_item = get_object_or_404(CartItem, pk=cart_item_id)
+
+#     if cart_item.quantity > 1:
+#         cart_item.quantity -= 1
+#         cart_item.save()
+        
+#         # Update total price
+#         cart_item.total_price = cart_item.product.price * cart_item.quantity
+#         cart_item.save()
+
+#         # Recalculate total cart price
+#         cart_items = CartItem.objects.filter(user=request.user)
+#         total_cart_price = sum(item.total_price for item in cart_items)
+        
+#         return JsonResponse({
+#             'quantity': cart_item.quantity,
+#             'total': cart_item.total_price,
+#             'final_total': total_cart_price
+#         }, status=200)
+#     else:
+#         return JsonResponse({'error': 'Quantity cannot be less than 1'}, status=400)
+    
+    
+# def increase_quantity(request, cart_item_id):
+#     cart_item = get_object_or_404(CartItem, pk=cart_item_id)
+
+#     # Increase the quantity
+#     cart_item.quantity += 1
+#     cart_item.save()
+    
+#     # Update total price
+#     cart_item.total_price = cart_item.product.price * cart_item.quantity
+#     cart_item.save()
+    
+#     # Recalculate total cart price
+#     cart_items = CartItem.objects.filter(user=request.user)
+#     total_cart_price = sum(item.total_price for item in cart_items)
+
+#     return JsonResponse({
+#         'quantity': cart_item.quantity,
+#         'total': cart_item.total_price,
+#         'final_total': total_cart_price
+#     }, status=200)
 
 def wishlist(request):
     wishlist_item = WishlistItem.objects.filter(user=request.user)
@@ -511,6 +593,8 @@ def remove_from_wishlist(request, item_id):
     # Return success response
     return JsonResponse({'message': 'Item removed from wishlist successfully'}, status=200)
     
+
+
 
 
 # def checkout_view(request):
@@ -619,21 +703,71 @@ def remove_from_wishlist(request, item_id):
 
 
 
+
+# copy before  modifying
+# @login_required
+# def checkout_view(request):
+#     user = request.user
+#     user_addresses = Address.objects.filter(user=user)
+#     user_cart = Cart.objects.filter(user=user).first()
+
+#     total_cart_price = 0
+#     cart_items = []
+#     if user_cart:
+#         cart_items = user_cart.items.all()
+#         # Calculate the total price of all cart items
+#         total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
+
+#     address_form = AddressSelectionForm(user=user)
+#     payment_form = PaymentOptionForm()
+
+#     if request.method == 'POST':
+#         street_address = request.POST.get('street_address')
+#         city = request.POST.get('city')
+#         state = request.POST.get('state')
+#         postal_code = request.POST.get('postal_code')
+#         country = request.POST.get('country')
+
+#         address = Address.objects.create(
+#             user=user,
+#             street_address=street_address,
+#             city=city,
+#             state=state,
+#             postal_code=postal_code,
+#             country=country
+#         )
+
+#     context = {
+#         'address_form': address_form,
+#         'payment_form': payment_form,
+#         'total_cart_price': total_cart_price,
+#         'cart_items': cart_items,
+#     }
+
+#     return render(request, 'core/checkout.html', context)
+
+
+
+
 @login_required
 def checkout_view(request):
     user = request.user
     user_addresses = Address.objects.filter(user=user)
     user_cart = Cart.objects.filter(user=user).first()
 
+    
+    
+
     total_cart_price = 0
     cart_items = []
     if user_cart:
         cart_items = user_cart.items.all()
         # Calculate the total price of all cart items
+        
         total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
 
     address_form = AddressSelectionForm(user=user)
-    payment_form = PaymentOptionForm()
+    #payment_form = PaymentOptionForm()
 
     if request.method == 'POST':
         street_address = request.POST.get('street_address')
@@ -651,26 +785,27 @@ def checkout_view(request):
             country=country
         )
 
-        # if address:
-        #     # Continue with the checkout process if the address is successfully created
-            
 
-        #         # Redirect to the order placed page
-        #         return redirect('core:order_placed')
-        #     else:
-        #         messages.error(request, "Please fill in all the required fields.")
-        # else:
-        #     return JsonResponse({'success': False, 'error': 'Failed to create new address'})
+    
+
 
     context = {
         'address_form': address_form,
-        'payment_form': payment_form,
+        #'payment_form': payment_form,
         'total_cart_price': total_cart_price,
         'cart_items': cart_items,
+        #'paypal_payment_button': paypal_payment_button
     }
 
     return render(request, 'core/checkout.html', context)
 
+
+def payment_complete(request):
+    return render(request, 'core/payment_complete.html')
+
+
+def payment_failed(request):
+    return render(request, 'core/payment_failed.html')
 
 
 
@@ -689,7 +824,8 @@ def order_placed(request):
     payment_form = PaymentOptionForm(request.POST)
     if address_form.is_valid() and payment_form.is_valid():
         shipping_address_id = address_form.cleaned_data['shipping_address'].id
-        payment_option = payment_form.cleaned_data['payment_option']
+        #payment_option = payment_form.cleaned_data['payment_option']
+
 
                 # Create a new order instance
         order = Order.objects.create(

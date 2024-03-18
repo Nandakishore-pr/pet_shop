@@ -9,8 +9,8 @@ class AddressSelectionForm(forms.Form):
         super(AddressSelectionForm, self).__init__(*args, **kwargs)
         self.fields['shipping_address'].queryset = Address.objects.filter(user=user)
 
-class PaymentOptionForm(forms.Form):
-    payment_option = forms.ChoiceField(choices=[('credit_card', 'Credit Card'), ('paypal', 'PayPal'), ('bank_transfer', 'Bank Transfer'),('cash_on_delivery','cash on delivery')])
+# class PaymentOptionForm(forms.Form):
+#     payment_option = forms.ChoiceField(choices=[('credit_card', 'Credit Card'), ('paypal', 'PayPal'), ('bank_transfer', 'Bank Transfer'),('cash_on_delivery','cash on delivery')])
 
 
 

@@ -13,13 +13,14 @@
     .price-align {
         display: flex;
         justify-content: flex-end;
-        margin-right: 33em;
+        margin-right: 28em;
         margin-bottom: 30px;
     }
 
     .table-align {
         margin-left: 40px;
     }
+    
 </style>
 
 {% if cart_items %}
@@ -43,18 +44,34 @@
                     <td>{{ cart_item.product.title }}</td>
                     <td>${{ cart_item.product.price }}</td>
                     <td>
+                        <button onclick="decreaseQuantity('{{ cart_item.id }}' , '{{ cart_item.cart_id }}')">-</button>
+                        <span id="quantity{{ cart_item.id }}">{{ cart_item.quantity }}</span>
+                        <button onclick="increaseQuantity('{{ cart_item.id }}', '{{ cart_item.cart_id }}')">+</button>
+                    </td>
+                    <td><span id=total{{ cart_item.id }}>₹{{ cart_item.total_price }} </span></td>
+                    <td><button class='btn primary-btn' onclick="removeFromCart('{{ cart_item.id }}')">Remove</button></td>
+                </tr>
+            {% endfor %} 
+
+            {% comment %} {% for cart_item in cart_items %}
+                <tr>
+                    <td><img src="{{ cart_item.product.image.url }}" alt="{{ cart_item.product.title }}" width="50"></td>
+                    <td>{{ cart_item.product.title }}</td>
+                    <td>${{ cart_item.product.price }}</td>
+                    <td>
                         <button onclick="decreaseQuantity('{{ cart_item.id }}')">-</button>
                         <span id="quantity{{ cart_item.id }}">{{ cart_item.quantity }}</span>
                         <button onclick="increaseQuantity('{{ cart_item.id }}')">+</button>
                     </td>
-                    <td>${{ cart_item.total_price }}</td>
-                    <td><button class='primary-btn remove-item-btn' data-cart-item-id="{{ cart_item.id }}">Remove</button></td>
+                    <td><span id="total{{ cart_item.id }}">₹{{ cart_item.total_price }} </span></td>
+                    <td><button class="btn primary-btn remove-item-btn" onclick="removeFromCart('{{ cart_item.id }}')">Remove</button></td>
                 </tr>
-            {% endfor %}
+            {% endfor %} {% endcomment %}
+
         </tbody>
     </table>
-    <div class='price-align'>
-        <h4> ${{ total_cart_price }}</h4>
+    <div class='price-align' >
+        <h4 id=final_total> ₹{{ total_cart_price }}</h4>
     </div>
     <div class='checkout-btn'>
         <button class='btn primary-btn'><a href="{% url "core:checkout_view" %}" style='color:white'>checkout</a></button>
@@ -64,8 +81,11 @@
 {% endif %}
 
 <script>
-    function increaseQuantity(cartItemId) {
-        fetch(`/increase_quantity/${cartItemId}`)
+    let final = document.getElementById('final_total');
+    function increaseQuantity(cartItemId,cart_id) {
+        let quantityInput = document.getElementById(`quantity${cartItemId}`)
+        let currentElement = document.getElementById(`total${cartItemId}`)
+        fetch(`/increase_quantity/${cartItemId}/${cart_id}`)
             .then(response => {
                 if (response.ok) {
                     return response.json();
@@ -74,23 +94,26 @@
                 }
             })
             .then(data => {
+                console.log(data)
                 // Update quantity
-                document.getElementById(`quantity${cartItemId}`).innerText = data.quantity;
-                // Calculate new total price for the item
-                const price = parseFloat(document.getElementById(`price${cartItemId}`).innerText.replace('$', ''));
-                const total = price * data.quantity;
-                // Update total price DOM element for the item
-                document.getElementById(`total${cartItemId}`).innerText = '$' + total.toFixed(2);
-                // Update total cart price
-                updateTotalCartPrice();
+                quantityInput.innerText = data.q;
+                console.log(data.total+"backend")
+                
+                currentElement.innerText = `₹${data.total}`
+                final_total.innerText = `₹${data.total_sum}`
+                
             })
             .catch(error => {
                 console.error('Error:', error);
             });
     }
     
-    function decreaseQuantity(cartItemId) {
-        fetch(`/decrease_quantity/${cartItemId}`)
+    function decreaseQuantity(cartItemId,cart_id) {
+        console.log("inside ")
+        console.log(cart_id)
+        console.log(cartItemId)
+        let currentElement = document.getElementById(`total${cartItemId}`)
+        fetch(`/decrease_quantity/${cartItemId}/${cart_id}`)
             .then(response => {
                 if (response.ok) {
                     return response.json();
@@ -100,21 +123,73 @@
             })
             .then(data => {
                 // Update quantity
+                
                 document.getElementById(`quantity${cartItemId}`).innerText = data.quantity;
+                currentElement.innerText = data.total
+                final_total.innerText = `₹${data.total_sum}`
                 // Calculate new total price for the item
-                const price = parseFloat(document.getElementById(`price${cartItemId}`).innerText.replace('$', ''));
-                const total = price * data.quantity;
+               // const price = parseFloat(document.getElementById(`price${cartItemId}`).innerText.replace('$', ''));
+               // const total = price * data.quantity;
                 // Update total price DOM element for the item
-                document.getElementById(`total${cartItemId}`).innerText = '$' + total.toFixed(2);
+                //document.getElementById(`total${cartItemId}`).innerText = '$' + total.toFixed(2);
                 // Update total cart price
-                updateTotalCartPrice();
+                //updateTotalCartPrice();
             })
             .catch(error => {
                 console.error('Error:', error);
             });
+    } 
+
+
+    function removeFromCart(CartItemId) {
+        // Send AJAX request to remove item from wishlist
+        fetch(`/remove_from_cart/${CartItemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                // Remove the item from the DOM if the request is successful
+                const itemElement = document.getElementById(`item-${CartItemId}`);
+                if (itemElement) {
+                    itemElement.remove();
+                }
+                window.location.reload(true)
+            } else {
+                console.error('Failed to remove item from wishlist');
+            }
+        })
+        .catch(error => console.error('Error:', error));
     }
+
+</script>
+
+    {% comment %} function removeFromCart(cartItemId) {
+        fetch(`/remove_from_cart/${cartItemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                const itemElement = document.getElementById(`item-${cartItemId}`);
+                if (itemElement) {
+                    itemElement.remove();
+                }
+            } else {
+                console.error('Failed to remove item from cart');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+     {% endcomment %}
     
-    function updateTotalCartPrice() {
+    {% comment %} function updateTotalCartPrice() {
         // Initialize total cart price
         let totalCartPrice = 0;
         // Loop through each cart item
@@ -147,6 +222,7 @@
                     document.getElementById(`cart-item-${cartItemId}`).remove();
                     // Update total cart price
                     updateTotalCartPrice();
+                    
                 } else {
                     throw new Error('Failed to remove item from cart');
                 }
@@ -156,8 +232,12 @@
                 // Handle error
             });
         });
-    });
-</script>
+    }); {% endcomment %}
+{% comment %} </script> {% endcomment %}
+
+
+
+
 
 
 {% endblock %}

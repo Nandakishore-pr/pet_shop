@@ -14,7 +14,7 @@
     .form-box {
         border: 1px solid #ccc;
         padding: 20px;
-        width: 45em; /* Adjust width as needed */
+        width: 450px; /* Adjust width as needed */
         background-color: #f9f9f9;
     }
 
@@ -32,34 +32,6 @@
     li {
         margin-bottom: 5px;
     }
-    .align-price {
-        display: flex;
-        align-items: center; /* Align items vertically */
-    }
-    
-    .align-price h3 {
-        margin-right: 10px; /* Add some space between the text and the price */
-    }
-
-    .align-price p{
-        margin-left:21em;
-        
-    }
-
-    .align-address{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-    }
-    .align-payment{
-        display:flex;
-        align-items:center;
-        justify-content:center;
-    }
-
-    .align-payment > div:first-child {
-        margin-right: 30px; /* Adjust the value as needed */
-    }
 </style>
 
 <div class="form-container">
@@ -69,61 +41,26 @@
         <form method="POST" action="{% url 'core:order_placed' %}" class="checkout-form">
             {% csrf_token %}
             <div class="form-section">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Image</th>
-                            <th>Title</th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cart_item in cart_items %}
-                        <tr>
-                            <td><img src="{{ cart_item.product.image.url }}" alt="{{ cart_item.product.title }}" width="50"></td>
-                            <td>{{ cart_item.product.title }}</td>
-                            <td>{{ cart_item.quantity }}</td>
-                            <td>{{ cart_item.product.price }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <h3>Total Cart Price: ${{ total_cart_price }}</h3>
                 <hr>
-                <div class='align-price'>
-                    <h3>Total Cart Price: </h3> 
-                    <p>₹{{ total_cart_price }}</p>
-                </div>
+                <ul>
+                    {% for cart_item in cart_items %}
+                        <li>{{ cart_item.product.title }} - Quantity: {{ cart_item.quantity }}</li>
+                    {% endfor %}
+                </ul>
                 <hr>
             </div>
-            <div class="form-section align-address" >
+            <div class="form-section">
                 {{ address_form.as_p }}
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addAddressModal">Add New Address</button>
             </div>
-            {% comment %} <div class="form-section">
+            <div class="form-section">
                 {{ payment_form.as_p }}
             </div>
             <div class="form-section">
                 <button type="submit" class='btn btn-primary'>Place Order</button>
-            </div> {% endcomment %}
+            </div>
         </form>
-
-        
-        <hr>
-        <div class='form-section'>
-            <a href="#" class='btn btn-primary'>Apply coupun</a>
-            <input type="text" name="coupon" placeholder="Enter promo code">
-        </div>
-        <hr>
-        <div class='align-payment'>
-            <div>
-                <a href="#" class='btn primary-btn'> cash on delivery</a>
-            </div>
-        
-            <div class="form-section">
-                {{ paypal_payment_button.render }}
-            </div>
-        </div>
         
  <!-- Add Address Modal -->
  <div class="modal fade" id="addAddressModal" tabindex="-1" role="dialog" aria-labelledby="addAddressModalLabel" aria-hidden="true">

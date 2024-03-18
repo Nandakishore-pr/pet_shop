@@ -44,7 +44,13 @@ INSTALLED_APPS = [
     'core',
     'account',
     'appadmin',
+
+    # Third party apps  
     'debug_toolbar',
+
+    #payment
+    'paypal.standard.ipn',
+
 ]
 
 MIDDLEWARE = [
@@ -164,3 +170,9 @@ AUTHENTICATION_BACKENDS = [
     'account.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend'
 ]
+
+
+
+PAYPAL_RECEIVER_EMAIL = 'sb-vbe1w29833002@business.example.com'   
+PAYPAL_TEST = True
+

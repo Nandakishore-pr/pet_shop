@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path,include
 from core import views
 
 app_name = "core"
@@ -19,8 +19,8 @@ urlpatterns = [
     path('cart_view/',views.cart_view,name='cart_view'),
     path('add_to_cart/',views.add_to_cart,name='add_to_cart'),
     path('remove_from_cart/<int:cart_item_id>/', views.remove_from_cart, name='remove_from_cart'),
-    path('decrease_quantity/<int:cart_item_id>/', views.decrease_quantity, name='decrease_quantity'),
-    path('increase_quantity/<int:cart_item_id>/', views.increase_quantity, name='increase_quantity'),
+    path('decrease_quantity/<int:cart_item_id>/<int:cart_id>/', views.decrease_quantity, name='decrease_quantity'),
+    path('increase_quantity/<int:cart_item_id>/<int:cart_id>/', views.increase_quantity, name='increase_quantity'),
     path('wishlist/',views.wishlist,name='wishlist'),
     path('checkout_view/',views.checkout_view,name='checkout_view'),
     path('add_to_wishlist/<int:product_pid>/',views.add_to_wishlist,name='add_to_wishlist'),
@@ -28,5 +28,8 @@ urlpatterns = [
     path('order_placed/',views.order_placed,name='order_placed'),
     path('orders/',views.orders,name='orders'),
     path('search/', views.search_view, name='search_view'),
+    path('paypal/', include('paypal.standard.ipn.urls')),
+    path('payment_complete/',views.payment_complete,name= 'payment_complete'),
+    path('payment_failed',views.payment_failed,name='payment_failed'),
 
 ]

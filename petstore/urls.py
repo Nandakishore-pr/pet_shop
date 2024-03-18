@@ -27,6 +27,11 @@ urlpatterns = [
     path('account/',include('account.urls')),
     path('appadmin/',include('appadmin.urls')),
 
+
+     path('paypal/', include('paypal.standard.ipn.urls')), # for payment processing
+
+
+    #reset password
     path('reset_password/',auth_views.PasswordResetView.as_view(template_name = "account/reset_password.html"),name="reset_password"),
     path('reset_password_sent/',auth_views.PasswordResetDoneView.as_view(template_name = "account/reset_password_sent.html"),name="password_reset_done"),
     path('reset/<uidb64>/<token>/',auth_views.PasswordResetConfirmView.as_view(template_name = "account/password_reset_confirm.html"),name="password_reset_confirm"),
