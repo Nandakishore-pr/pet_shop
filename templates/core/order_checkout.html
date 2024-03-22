@@ -1,0 +1,194 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+    /* Center the form horizontally and vertically */
+    .checkout-container {
+        display: flex;
+        justify-content: space-between; /* Add space between items */
+        flex-wrap: wrap; /* Allow items to wrap to the next line */
+    }
+
+    /* Style for the form box */
+    .checkout-box {
+        border: 1px solid #ccc;
+        padding: 20px;
+        width: calc(50% - 20px); /* Adjust width as needed */
+        background-color: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .checkout-box {
+        flex-grow: 1;
+    }
+
+    /* Style for form sections */
+    .checkout-section {
+        margin-bottom: 20px;
+    }
+
+    .align-price {
+        display: flex;
+        align-items: center; /* Align items vertically */
+    }
+    
+    .align-price h3 {
+        margin-right: 10px; /* Add some space between the text and the price */
+    }
+
+    .align-price p{
+        margin-left:23em;
+        
+    }
+
+    /* Style for address form */
+    .address-box {
+        border: 1px solid #ccc;
+        padding: 20px;
+        width: calc(50% - 20px); /* Adjust width as needed */
+        background-color: #f9f9f9;
+    }
+
+    /* Style for form sections */
+    .address-section {
+        margin-bottom: 20px;
+    }
+
+    /* Style for coupon and payment buttons */
+    .coupon-payment-container {
+        display: flex;
+
+        margin-bottom: 20px;
+    }
+
+    .coupon-payment-container .btn {
+        margin-right: 10px; /* Adjust the spacing between buttons */
+    }
+
+    /* Style for the PayPal payment button */
+    .paypal-payment-container {
+        text-align: right; /* Align the PayPal button to the right */
+    }
+
+    .paypal-payment-container .form-section {
+        margin-top: 20px; /* Add space between the buttons and PayPal button */
+    }
+</style>
+
+<div class="checkout-container">
+    <div class="checkout-box">
+        <h2>Checkout</h2>
+        <hr>
+        <div class="checkout-section">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Title</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cart_item in cart_items %}
+                    <tr>
+                        <td><img src="{{ cart_item.product.image.url }}" alt="{{ cart_item.product.title }}" width="50"></td>
+                        <td>{{ cart_item.product.title }}</td>
+                        <td>{{ cart_item.quantity }}</td>
+                        <td>{{ cart_item.product.price }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div>
+                {% comment %} <form action="{% url "order_checkout" %}"> {% endcomment %}
+                <input type="text" name="coupon_code" placeholder="Enter promo code">
+                <a href="{% url "core:order_checkout"  %}"class="btn btn-primary">Apply coupon</a>
+                {% comment %} <button type="submit" class="btn btn-primary">Apply Coupon</button> {% endcomment %}
+                {% comment %} </form> {% endcomment %}
+            </div> 
+            <hr>
+            <div class='align-price'>
+                <h3>Total Cart Price: </h3> 
+                <p>₹{{ total }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    
+    <div class='address-box'>
+        <h2>Address</h2>
+        <hr>
+        <div class='address-section'>
+            <div class="form-section align-address">
+                {% comment %} <form action="{% url "core:add_address" %}"> {% endcomment %}
+                {% for address in addresses %}
+                <input type="radio" id="address_{{ address.id }}" name="shipping_address" value="{{ address.id }}">
+                <label for="address_{{ address.id }}">{{ address }}</label><br>
+                {% endfor %}
+                {% comment %} </form> {% endcomment %}
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addAddressModal">Add New Address</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="coupon-payment-container">
+
+        <div class="form-section">
+            <input type="radio" value="{{ paypal_payment_button.render }}">
+            
+        </div>
+        <div class="form-section">
+        <a href="{% url "core:cash_on_delivery" %}" class='btn btn-primary'>Pay Cash on Delivery</a>
+        </div>
+    </div>
+
+
+
+
+ <!-- Add Address Modal -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" role="dialog" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAddressModalLabel">Add New Address</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="street_address">Street Address</label>
+                        <input type="text" class="form-control" id="street_address" name="street_address" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" class="form-control" id="city" name="city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="state">State</label>
+                        <input type="text" class="form-control" id="state" name="state" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="postal_code">Postal Code</label>
+                        <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <input type="text" class="form-control" id="country" name="country" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Address</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base/admin_base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="card-title">Coupons</h4>
+    <!-- Add New Category button in the top right corner -->
+    <a href="{% url "appadmin:create_coupon" %}" class="btn btn-primary">Create coupon</a>
+</div>
+<div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>code</th>
+                <th>Discount</th>
+                <th>Active date</th>
+                <th>Expiry date</th>
+                <th>Action</th>
+                <!-- Add more columns as needed -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for coupon in coupons %}
+            <tr>
+                <td>{{ coupon.id }}</td>
+                <td>{{ coupon.code }}</td>
+                <td>{{ coupon.discount }}%</td>
+                <td>{{coupon.active_date}}</td>
+                <td>{{coupon.expiry_date}}</td>
+                <td><a href="{% url "appadmin:delete_coupon" id=coupon.id%}" class= 'btn btn-primary'>Delete</a></td>
+                <!-- Render other coupon fields as needed -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

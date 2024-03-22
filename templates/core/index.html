@@ -53,8 +53,8 @@
             <div class="row featured__filter">
                 {% for product in featured_products %}
                 <div class="col-lg-3 col-md-4 col-sm-6 mix oranges fresh-meat">
-                    <div class="featured__item">
-                        <div class="featured__item__pic set-bg" data-setbg="{{ product.image.url }}">
+                    <div class="featured__item" onclick="window.location='{% url 'core:product_detail' product_pid=product.pid %}'">
+                        <div class="featured__item__pic set-bg" onclick="window.location='{% url 'core:product_detail' product_pid=product.pid %}'" data-setbg="{{ product.image.url }}">
                             <ul class="featured__item__pic__hover">
                                 <li><a href="#"><i class="fa fa-heart"></i></a></li>
                                 {% comment %} <li><a href="#"><i class="fa fa-retweet"></i></a></li> {% endcomment %}
@@ -210,11 +210,12 @@
                     </div>
                 </div>
             </div>
+            
             <div class="row featured__filter">
                 {% for product in latest_products %}
-                <div class="col-lg-3 col-md-4 col-sm-6 mix oranges fresh-meat">
-                    <div class="featured__item">
-                        <div class="featured__item__pic set-bg" data-setbg="{{ product.image.url }}">
+                <div class="col-lg-3 col-md-4 col-sm-6 mix oranges fresh-meat style="cursor: pointer;"">
+                    <div class="featured__item" onclick="window.location='{% url 'core:product_detail' product_pid=product.pid %}'">
+                        <div class="featured__item__pic set-bg"  onclick="window.location='{% url 'core:product_detail' product_pid=product.pid %}'" data-setbg="{{ product.image.url }}">
                             <ul class="featured__item__pic__hover">
                                 <li><a href="#"><i class="fa fa-heart"></i></a></li>
                                 {% comment %} <li><a href="#"><i class="fa fa-retweet"></i></a></li> {% endcomment %}

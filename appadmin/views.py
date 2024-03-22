@@ -5,10 +5,18 @@ from django.contrib.auth import logout,login,get_user_model
 from django.views.decorators.cache import never_cache
 from django.contrib.auth import authenticate,login,logout
 from django.urls import reverse
-from core.models import Category,Product,ProductImages,Subcategory,Order,OrderItem
+from core.models import Category,Product,ProductImages,Subcategory,Order,OrderItem,Coupon
 # from core.forms import ProductEditForm,ProductImagesForm
 from account.models import User
 from django.contrib.auth.decorators import login_required
+import calendar
+from django.db.models.functions import ExtractMonth
+from django.db.models import Count, Avg, Sum
+from datetime import datetime,timedelta
+from django.utils import timezone
+from django.utils.timezone import make_aware
+
+from django.db.models.functions import TruncMonth, TruncYear
 
 
 
@@ -36,8 +44,18 @@ def admin_login(request):
 def admin_index(request):
     if not request.user.is_authenticated:
         return redirect('appadmin:admin_login')
+    total_orders = Order.objects.count()
+    total_amount = Order.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+    total_products = Product.objects.count()
+
+    context = {
+        'total_orders': total_orders,
+        'total_amount': total_amount,
+        'total_products': total_products,
+    }
+
     
-    return render(request, 'appadmin/admin_index.html')
+    return render(request, 'appadmin/admin_index.html',context)
 
 
 def admin_logout(request):
@@ -400,3 +418,87 @@ def update_order_status(request, order_id):
 #             return redirect('appadmin:admin_order')
 #     # context = {'order': order}
 #     return redirect('appadmin:admin_order')
+    
+
+def admin_coupon(request):
+    coupon = Coupon.objects.all
+    context={
+        "coupons":coupon
+    }
+    return render (request,'appadmin/admin_coupon.html',context)
+
+def create_coupon(request):
+    if request.method == 'POST':
+        code = request.POST['code']
+        discount = request.POST['discount']
+        active = request.POST.get('active') == 'on'
+        active_date = request.POST['active_date']
+        expiry_date = request.POST['expiry_date']
+
+        # Check if active_date is not greater than expiry_date
+        if active_date > expiry_date:
+            messages.error(request, 'Active date should not be greater than expiry date')
+            return render(request, 'appadmin/create_coupon.html')
+
+        # Check if the coupon with the same code already exists
+        if Coupon.objects.filter(code=code).exists():
+            messages.error(request, f'Coupon with code {code} already exists')
+            return render(request, 'appadmin/create_coupon.html')
+
+        coupon = Coupon(
+            code=code,
+            discount=discount,
+            active=active,
+            active_date=active_date,
+            expiry_date=expiry_date
+        )
+        coupon.save()
+        messages.success(request, 'Coupon created successfully')
+        return redirect('appadmin:admin_coupon')
+
+    return render(request,'appadmin/create_coupon.html')
+
+def delete_coupon(request,id):
+    try:
+        coupon= get_object_or_404(Coupon, id=id)
+    except ValueError:
+        return redirect('appadmin:admin_coupon')
+    coupon.delete()
+    messages.warning(request,"Coupon has been deleted successfully")
+
+    return redirect('appadmin:admin_coupon')
+
+def banner(request):
+    return render(request,'appadmin/banner.html')
+
+def sales_report(request):
+    start_date_value = ""
+    end_date_value = ""
+    orders = Order.objects.filter(status='delivered').order_by('created_at')
+
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        start_date_value = start_date
+        end_date_value = end_date
+
+        if start_date and end_date:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
+            
+            orders = Order.objects.filter(created_at__range=(start_date, end_date), status='delivered').order_by('created_at')
+            print(orders)
+            print("hello")
+
+    context = {
+        'orders': orders,
+        'start_date_value': start_date_value,
+        'end_date_value': end_date_value
+    }
+
+    return render(request, 'appadmin/sales_report.html', context)
+
+
+def offres(request):
+    return render(request,'appadmin/offers.html')

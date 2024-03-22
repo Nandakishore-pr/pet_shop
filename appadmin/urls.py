@@ -23,4 +23,10 @@ urlpatterns = [
     path('block_unblock_user/<str:username>/', views.block_unblock_user, name='block_unblock_user'),
     path('admin_order/',views.admin_order,name='admin_order'),
     path('update_order_status/<int:order_id>/',views.update_order_status,name='update_order_status'),
+    path('admin_coupon/',views.admin_coupon,name='admin_coupon'),
+    path('create_coupon/',views.create_coupon,name='create_coupon'),
+    path('delete_coupon/<int:id>/',views.delete_coupon,name='delete_coupon'),
+    path('banner/',views.banner,name= 'banner'),
+    path('sales_report',views.sales_report,name='sales_report'),
+    path('offres',views.offres,name='offres'),
 ]

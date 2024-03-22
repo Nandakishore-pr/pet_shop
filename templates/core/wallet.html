@@ -1,0 +1,16 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block content %}
+
+
+<style>
+    .wal-amount{
+        text-align:center;
+        font-size:20px;
+    }
+</style>
+
+<h2 style='text-align:center'>Wallet</h2>
+<p class = 'wal-amount'>{{ wallet.Amount }} rupees in your wallet</p>
+
+{% endblock %}

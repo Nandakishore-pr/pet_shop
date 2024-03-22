@@ -2,173 +2,139 @@
 {% load static %}
 {% block content %}
 
-<style>
-    /* Center the form horizontally and vertically */
-    .form-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
 
-    /* Style for the form box */
-    .form-box {
-        border: 1px solid #ccc;
-        padding: 20px;
-        width: 45em; /* Adjust width as needed */
-        background-color: #f9f9f9;
-    }
 
-    /* Style for form sections */
-    .form-section {
-        margin-bottom: 20px;
-    }
-
-    ul {
-        list-style-type: none; /* Set list-style-type to none */
-        padding-left: 0; /* Optional: remove default padding */
-    }
-
-    /* Optional: Add some margin between list items */
-    li {
-        margin-bottom: 5px;
-    }
-    .align-price {
-        display: flex;
-        align-items: center; /* Align items vertically */
-    }
-    
-    .align-price h3 {
-        margin-right: 10px; /* Add some space between the text and the price */
-    }
-
-    .align-price p{
-        margin-left:21em;
-        
-    }
-
-    .align-address{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-    }
-    .align-payment{
-        display:flex;
-        align-items:center;
-        justify-content:center;
-    }
-
-    .align-payment > div:first-child {
-        margin-right: 30px; /* Adjust the value as needed */
-    }
-</style>
-
-<div class="form-container">
-    <div class="form-box">
-        <h2>checkout</h2>
-        <hr>
-        <form method="POST" action="{% url 'core:order_placed' %}" class="checkout-form">
-            {% csrf_token %}
-            <div class="form-section">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Image</th>
-                            <th>Title</th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cart_item in cart_items %}
-                        <tr>
-                            <td><img src="{{ cart_item.product.image.url }}" alt="{{ cart_item.product.title }}" width="50"></td>
-                            <td>{{ cart_item.product.title }}</td>
-                            <td>{{ cart_item.quantity }}</td>
-                            <td>{{ cart_item.product.price }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <hr>
-                <div class='align-price'>
-                    <h3>Total Cart Price: </h3> 
-                    <p>₹{{ total_cart_price }}</p>
+<!-- Checkout Section Begin -->
+<section class="checkout spad">
+    <h2 style='text-align:center'>CHECKOUT</h2>
+    <div class="container">
+        <div class="checkout__form">
+            <h4>Billing Details</h4>
+            <form action="#">
+                <div class="row">
+                    <div class="col-lg-7 col-md-7">
+                        <div class="row">
+                            {% comment %} <div class="col-lg-6">
+                                <div class="checkout__input">
+                                    <p>Fist Name<span>*</span></p>
+                                    <input type="text">
+                                </div>
+                            </div> {% endcomment %}
+                            {% comment %} <div class="col-lg-6">
+                                <div class="checkout__input">
+                                    <p>Last Name<span>*</span></p>
+                                    <input type="text">
+                                </div>
+                            </div> {% endcomment %}
+                            {% for address in addresses %}
+                            <input type="radio" id="address_{{ address.id }}" name="shipping_address" value="{{ address.id }}">
+                            <label for="address_{{ address.id }}">{{ address }}</label>
+                            <br>
+                            {% endfor %}
+                        </div>
+                        {% comment %} <div class="checkout__input">
+                            <p>Country<span>*</span></p>
+                            <input type="text">
+                        </div>
+                        <div class="checkout__input">
+                            <p>Address<span>*</span></p>
+                            <input type="text" placeholder="Street Address" class="checkout__input__add">
+                            <input type="text" placeholder="Apartment, suite, unite ect (optinal)">
+                        </div>
+                        <div class="checkout__input">
+                            <p>Town/City<span>*</span></p>
+                            <input type="text">
+                        </div>
+                        <div class="checkout__input">
+                            <p>Country/State<span>*</span></p>
+                            <input type="text">
+                        </div> {% endcomment %}
+                        {% comment %} <div class="checkout__input">
+                            <p>Postcode / ZIP<span>*</span></p>
+                            <input type="text">
+                        </div> {% endcomment %}
+                        <div class="row">
+                            {% comment %} <div class="col-lg-6">
+                                <div class="checkout__input">
+                                    <p>Phone<span>*</span></p>
+                                    <input type="text">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="checkout__input">
+                                    <p>Email<span>*</span></p>
+                                    <input type="text">
+                                </div>
+                            </div> {% endcomment %}
+                        </div>
+                        {% comment %} <div class="checkout__input__checkbox">
+                            <label for="acc">
+                                Create an account?
+                                <input type="checkbox" id="acc">
+                                <span class="checkmark"></span>
+                            </label>
+                        </div>
+                        <p>Create an account by entering the information below. If you are a returning customer
+                            please login at the top of the page</p>
+                        <div class="checkout__input">
+                            <p>Account Password<span>*</span></p>
+                            <input type="text">
+                        </div> {% endcomment %}
+                        {% comment %} <div class="checkout__input__checkbox">
+                            <label for="diff-acc">
+                                Ship to a different address?
+                                <input type="checkbox" id="diff-acc">
+                                <span class="checkmark"></span>
+                            </label>
+                        </div>
+                        <div class="checkout__input">
+                            <p>Order notes<span>*</span></p>
+                            <input type="text"
+                                placeholder="Notes about your order, e.g. special notes for delivery.">
+                        </div> {% endcomment %}
+                    </div>
+                
+                    <div class="col-lg-4 col-md-6">
+                        <div class="checkout__order">
+                            <h4>Your Order</h4>
+                            <div class="checkout__order__products">Products <span>Total</span></div>
+                            <ul>
+                                <li>Vegetable’s Package <span>$75.99</span></li>
+                                <li>Fresh Vegetable <span>$151.99</span></li>
+                                <li>Organic Bananas <span>$53.99</span></li>
+                            </ul>
+                            <div class="checkout__order__subtotal">Subtotal <span>$750.99</span></div>
+                            <div class="checkout__order__total">Total <span>$750.99</span></div>
+                            <div class="checkout__input__checkbox">
+                                {% comment %} <label for="acc-or">
+                                    Create an account?
+                                    <input type="checkbox" id="acc-or">
+                                    <span class="checkmark"></span>
+                                </label> {% endcomment %}
+                            </div>
+                            {% comment %} <p>Lorem ipsum dolor sit amet, consectetur adip elit, sed do eiusmod tempor incididunt
+                                ut labore et dolore magna aliqua.</p> {% endcomment %}
+                            <div class="checkout__input__checkbox">
+                                <label for="payment">
+                                    Cash Payment
+                                    <input type="radio" id="payment">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </div>
+                            <div class="checkout__input__checkbox">
+                                <label for="paypal">
+                                    Paypal
+                                    <input type="radio" id="paypal">
+                                    <span class="checkmark"></span>
+                                </label>
+                            </div>
+                            <button type="submit" class="site-btn">PLACE ORDER</button>
+                        </div>
+                    </div>
                 </div>
-                <hr>
-            </div>
-            <div class="form-section align-address" >
-                {{ address_form.as_p }}
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addAddressModal">Add New Address</button>
-            </div>
-            {% comment %} <div class="form-section">
-                {{ payment_form.as_p }}
-            </div>
-            <div class="form-section">
-                <button type="submit" class='btn btn-primary'>Place Order</button>
-            </div> {% endcomment %}
-        </form>
-
-        
-        <hr>
-        <div class='form-section'>
-            <a href="#" class='btn btn-primary'>Apply coupun</a>
-            <input type="text" name="coupon" placeholder="Enter promo code">
-        </div>
-        <hr>
-        <div class='align-payment'>
-            <div>
-                <a href="#" class='btn primary-btn'> cash on delivery</a>
-            </div>
-        
-            <div class="form-section">
-                {{ paypal_payment_button.render }}
-            </div>
-        </div>
-        
- <!-- Add Address Modal -->
- <div class="modal fade" id="addAddressModal" tabindex="-1" role="dialog" aria-labelledby="addAddressModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addAddressModalLabel">Add New Address</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form method="POST">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="street_address">Street Address</label>
-                        <input type="text" class="form-control" id="street_address" name="street_address" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="city">City</label>
-                        <input type="text" class="form-control" id="city" name="city" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="state">State</label>
-                        <input type="text" class="form-control" id="state" name="state" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="postal_code">Postal Code</label>
-                        <input type="text" class="form-control" id="postal_code" name="postal_code" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="country">Country</label>
-                        <input type="text" class="form-control" id="country" name="country" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save Address</button>
-                </form>
-            </div>
+            </form>
         </div>
     </div>
-</div>
-<!-- End Add Address Modal -->
-
-        
-    </div>
-</div>
-
+</section>
 
 {% endblock %}

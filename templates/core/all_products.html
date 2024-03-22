@@ -12,7 +12,7 @@
                     <ul>
                         {% for category in categories %}
                             <li>
-                                <a href="#">
+                                <a href="{% url 'core:sort_by_category' category_cid=category.cid %}">
                                     {{ category.cname }}
                                 </a>
                             </li>

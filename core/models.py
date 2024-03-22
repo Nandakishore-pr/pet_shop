@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.safestring import  mark_safe
 from account.models import User,Address
+from decimal import Decimal
 
 # Create your models here.
 
@@ -41,6 +42,8 @@ class Category(models.Model):
 
     def __str__(self):
         return self.cname
+    
+    
 class Subcategory(models.Model):
     sid = models.BigAutoField(unique=True, primary_key = True)
     sub_name = models.CharField(max_length=100)
@@ -99,8 +102,6 @@ class ProductImages(models.Model):
 
 
 
-
-
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -156,7 +157,7 @@ class Order(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     items = models.ManyToManyField('Product', through='OrderItem')
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.IntegerField(default = 0)
     shipping_address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PROCESSING)
@@ -186,3 +187,70 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"Order #{self.order.pk} - {self.product.title} - Quantity: {self.quantity}"
+    
+
+
+
+class wallet(models.Model):
+  user=models.ForeignKey(User,on_delete=models.CASCADE)
+  Amount =models.IntegerField(default = 0)
+  
+  class Meta:
+    verbose_name_plural="Wallet"
+    
+  def __str__(self):
+    return self.user.email 
+
+
+
+class Coupon(models.Model):
+  code=models.CharField(max_length=50,unique=True)
+  discount=models.PositiveIntegerField(help_text='discount in percentage')
+  active=models.BooleanField(default=True)
+  active_date=models.DateField()
+  expiry_date=models.DateField()
+  created_date=models.DateTimeField(auto_now_add=True)
+  
+  
+  def __str__(self):
+     return self.code
+  
+
+
+# ......................Product Offer..........................
+
+class ProductOffer(models.Model):
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+    active = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.discount_percentage}% Discount"
+
+    def save(self, *args, **kwargs):
+        # Ensure discount_percentage is Decimal type
+        if not isinstance(self.discount_percentage, Decimal):
+            self.discount_percentage = Decimal(str(self.discount_percentage))
+        super().save(*args, **kwargs)
+
+
+class CategoryOffer(models.Model):
+    cat_discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    cat_start_date = models.DateTimeField(null=True, blank=True)
+    cat_end_date = models.DateTimeField(null=True, blank=True)
+    cat_active = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.discount_percentage}% Discount"
+
+    def save(self, *args, **kwargs):
+        # Ensure discount_percentage is Decimal type
+        if not isinstance(self.discount_percentage, Decimal):
+            self.discount_percentage = Decimal(str(self.discount_percentage))
+        super().save(*args, **kwargs)
+
+
+
+class Banner(models.Model):
+    bannner_image =  models.ImageField(upload_to="banner/")

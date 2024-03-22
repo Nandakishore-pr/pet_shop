@@ -44,14 +44,17 @@
                     <td>{{ cart_item.product.title }}</td>
                     <td>${{ cart_item.product.price }}</td>
                     <td>
-                        <button onclick="decreaseQuantity('{{ cart_item.id }}' , '{{ cart_item.cart_id }}')">-</button>
-                        <span id="quantity{{ cart_item.id }}">{{ cart_item.quantity }}</span>
-                        <button onclick="increaseQuantity('{{ cart_item.id }}', '{{ cart_item.cart_id }}')">+</button>
+                        
+                            <button onclick="decreaseQuantity('{{ cart_item.id }}' , '{{ cart_item.cart_id }}')">-</button>
+                            <span id="quantity{{ cart_item.id }}">{{ cart_item.quantity }}</span>
+                            <button onclick="increaseQuantity('{{ cart_item.id }}', '{{ cart_item.cart_id }}')" >+</button>
+                        
                     </td>
                     <td><span id=total{{ cart_item.id }}>₹{{ cart_item.total_price }} </span></td>
                     <td><button class='btn primary-btn' onclick="removeFromCart('{{ cart_item.id }}')">Remove</button></td>
                 </tr>
             {% endfor %} 
+            <div id='toast' class='toast'></div>
 
             {% comment %} {% for cart_item in cart_items %}
                 <tr>
@@ -74,20 +77,21 @@
         <h4 id=final_total> ₹{{ total_cart_price }}</h4>
     </div>
     <div class='checkout-btn'>
-        <button class='btn primary-btn'><a href="{% url "core:checkout_view" %}" style='color:white'>checkout</a></button>
+        <button class='btn primary-btn'><a href="{% url "core:order_checkout" %}" style='color:white'>checkout</a></button>
     </div>
 {% else %}
-    <h2>Your cart is empty.</h2>
+    <h2 style="text-align:center">Your cart is empty.</h2>
 {% endif %}
 
 <script>
     let final = document.getElementById('final_total');
-    function increaseQuantity(cartItemId,cart_id) {
+    {% comment %} function increaseQuantity(cartItemId,cart_id) {
         let quantityInput = document.getElementById(`quantity${cartItemId}`)
         let currentElement = document.getElementById(`total${cartItemId}`)
         fetch(`/increase_quantity/${cartItemId}/${cart_id}`)
             .then(response => {
                 if (response.ok) {
+                    console.log(response.status);
                     return response.json();
                 } else {
                     throw new Error('Failed to increase quantity');
@@ -102,10 +106,54 @@
                 currentElement.innerText = `₹${data.total}`
                 final_total.innerText = `₹${data.total_sum}`
                 
+                
             })
             .catch(error => {
                 console.error('Error:', error);
+                showToast('error', error.message);
             });
+    } {% endcomment %}
+    function increaseQuantity(cartItemId, cart_id) {
+        let quantityInput = document.getElementById(`quantity${cartItemId}`);
+        let currentElement = document.getElementById(`total${cartItemId}`);
+        fetch(`/increase_quantity/${cartItemId}/${cart_id}`)
+            .then(response => {
+                if (response.status === 200) {
+                    return response.json();
+                } else if (response.status === 201) {
+                    showToast('info', 'Product is out of stock');
+                    throw new Error('Product is out of stock');
+                } else {
+                    throw new Error('Failed to increase quantity');
+                }
+            })
+            .then(data => {
+                console.log(data);
+                // Update quantity
+                quantityInput.innerText = data.q;
+                console.log(data.total + "backend");
+    
+                currentElement.innerText = `₹${data.total}`;
+                final_total.innerText = `₹${data.total_sum}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('error', error.message);
+            });
+    }
+    
+
+
+    function showToast(type, message) {
+        // Get the toast element
+        let toast = document.getElementById('toast');
+        // Set toast message and class based on type
+        toast.innerText = message;
+        toast.className = `show ${type}`;
+        // Hide the toast after 3 seconds
+        setTimeout(() => {
+            toast.className = toast.className.replace("show", "");
+        }, 3000);
     }
     
     function decreaseQuantity(cartItemId,cart_id) {

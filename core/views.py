@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect
-from core.models import Category,Product,Subcategory,ProductImages,Cart,CartItem,WishlistItem,Order,OrderItem
+from core.models import Category,Product,Subcategory,ProductImages,Cart,CartItem,WishlistItem,Order,OrderItem,wallet,Coupon
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -7,8 +7,8 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from account.forms import  UserProfileForm,AddressForm
 from account.models import Profile,Address,User
-from django.http import HttpResponseBadRequest,JsonResponse
-from core.forms import AddressSelectionForm,PaymentOptionForm,ProductSearchForm
+from django.http import HttpResponseBadRequest,JsonResponse,HttpResponseRedirect,HttpResponse
+from core.forms import ProductSearchForm
 import json
 from django.views.decorators.http import require_POST
 
@@ -18,6 +18,8 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from paypal.standard.forms import PayPalPaymentsForm
 
+
+#PaymentOptionForm
 # Create your views here.
 
 def get_common_context():
@@ -99,7 +101,7 @@ def product_detail(request,product_pid):
 def all_products(request, category_id=None):
     # Fetch all categories
     categories = Category.objects.all()
-
+    print(category_id)
     # Get the selected category if provided
     selected_category = None
     if category_id:
@@ -127,20 +129,22 @@ def all_products(request, category_id=None):
     return render(request, 'core/all_products.html', context)
 
 
-# def sort_by_category(request,category_id):
-#     categories = Category.objects.all()  # Fetch all categories
-#     selected_category = get_object_or_404(Category,id=category_id)
 
-#     products = Product.objects.filter(category = selected_category)
+
+def sort_by_category(request,category_cid):
+    categories = Category.objects.all()  # Fetch all categories
+    selected_category = get_object_or_404(Category,cid=category_cid)
+
+    products = Product.objects.filter(category = selected_category)
     
 
-#     context = {
-#         'products': products,
-#         'categories': categories,
-#         'selected_category': selected_category,  # Pass selected category ID to template
-#     }
+    context = {
+        'products': products,
+        'categories': categories,
+        'selected_category': selected_category,  # Pass selected category ID to template
+    }
 
-#     return render(request,'core/all_products.html',context)
+    return render(request,'core/all_products.html',context)
 
 def profile_view(request):
     user = request.user
@@ -165,108 +169,6 @@ def password_change(request):
     else:
         form = PasswordChangeForm(request.user)
     return render(request, 'core/change_password.html', {'form': form})
-
-
-
-# @login_required
-# def edit_profile(request):
-#     user = request.user
-#     try:
-#         profile_instance = user.profile
-#     except Profile.DoesNotExist:
-#         # If profile doesn't exist, create one
-#         profile_instance = Profile.objects.create(user=user)
-
-#     # Get the address instance for the current user
-#     address_instance = None
-    
-#     try:
-#         address_instances = Address.objects.filter(user=user)
-#         address_instance = address_instances.first() if address_instances.exists() else None
-#     except Address.DoesNotExist:
-#         address_instance = None
-
-
-#     if request.method == 'POST':
-#         # Create form instances and populate them with data from the request
-#         profile_form = UserProfileForm(request.POST, instance=profile_instance)
-
-#         if address_instance:
-#             address_form = AddressForm(request.POST, instance=address_instance)
-#         else:
-#             address_form = AddressForm(request.POST)
-
-#         # Check if the forms are valid
-#         if profile_form.is_valid() and (not address_instance or address_form.is_valid()):
-#             # Save the form data to the database
-#             profile_form.save()
-#             address = address_form.save(commit=False)
-#             address.user = user  # Set the user for the address instance
-#             address.save()
-#             # Redirect to a success page
-#             return redirect('core:profile_view')  
-
-#     else:
-#         # If it's a GET request, create form instances with initial data
-#         profile_form = UserProfileForm(instance=profile_instance)
-#         if address_instance:
-#             address_form = AddressForm(instance=address_instance)
-#         else:
-#             address_form = AddressForm()
-
-#     context = {
-#         'profile_form': profile_form,
-#         'address_form': address_form,
-#         'has_address':address_instance is not None,
-#     }
-
-#     return render(request, 'core/edit_profile.html', context)
-
-
-
-# @login_required
-# def edit_profile(request):
-#     user = request.user
-#     try:
-#         profile = user.profile
-#     except Profile.DoesNotExist:
-#         profile = None
-
-#     if request.method == 'POST':
-#         user_form = UserProfileForm(request.POST, instance=user)
-#         if profile:
-#             profile_form = UserProfileForm(request.POST, instance=profile)
-#         else:
-#             profile_form = UserProfileForm(request.POST)
-
-#         if user_form.is_valid() and profile_form.is_valid():
-#             user_form.save()
-#             if profile:
-#                 profile_form.save()
-#             else:
-#                 profile = profile_form.save(commit=False)
-#                 profile.user = user
-#                 profile.save()
-#             messages.success(request, 'Your profile has been updated successfully!')
-#             return redirect('core:profile_view')  # Redirect to user's profile page
-#         else:
-#             messages.error(request, 'Please correct the errors below.')
-
-#     else:
-#         user_form = UserProfileForm(instance=user)
-#         if profile:
-#             profile_form = UserProfileForm(instance=profile)
-#         else:
-#             profile_form = UserProfileForm()
-
-#     context = {
-#         'user_form': user_form,
-#         'profile_form': profile_form
-#     }
-
-#     return render(request, 'core/edit_profile.html', context)
-
-
 
 
 @login_required
@@ -417,28 +319,21 @@ def add_to_cart(request):
         product_pid = request.GET.get('product_pid')
         if product_pid:
             try:
-                # Assuming you have a view function to retrieve the product based on product_pid
                 product = Product.objects.get(pid=product_pid)
-
-                # Get or create the user's cart
                 user_cart, created = Cart.objects.get_or_create(user=request.user)
-
-                # Check if the item is already in the cart
                 cart_item, item_created = CartItem.objects.get_or_create(cart=user_cart, product=product)
 
                 if item_created:
-                    # Item is added to cart
                     message = f"{product.title} added to cart"
                 else:
-                    # Item is already in the cart
+
                     message = f"{product.title} is already in your cart"
 
-                # Redirect to the product detail view with the appropriate product_pid
                 return JsonResponse({'message': message})
             except Product.DoesNotExist:
                 pass
 
-    # Handle invalid requests or errors
+
     return HttpResponseBadRequest("Invalid request")
 
 
@@ -460,8 +355,6 @@ def decrease_quantity(request, cart_item_id,cart_id):
         cart_item.save()
         
         print(cart_item.quantity)
-
-        # Update total price
         total_price = cart_item.product.price * cart_item.quantity
         cart_item.save()
         print(total_price)
@@ -484,13 +377,13 @@ def decrease_quantity(request, cart_item_id,cart_id):
 def increase_quantity(request, cart_item_id,cart_id):
     cart_item = get_object_or_404(CartItem, pk=cart_item_id)
     
-    # Increase the quantity
-    if cart_item.quantity >= 1:
+
+    if cart_item.quantity < cart_item.product.stock:
         cart_item.quantity += 1
         cart_item.save()
         print(cart_item.quantity)
     
-    # Update total price
+
         total_price = cart_item.product.price * cart_item.quantity
         cart_item.save()
 
@@ -508,54 +401,8 @@ def increase_quantity(request, cart_item_id,cart_id):
         print(cart_item.quantity)
         return JsonResponse({'q': cart_item.quantity , 'total':total_price,'total_sum':total}, status=200)
     else:
-        return JsonResponse({'error': 'Quantity cannot be less than 1'}, status=400)
-
-
-
-# def decrease_quantity(request, cart_item_id):
-#     cart_item = get_object_or_404(CartItem, pk=cart_item_id)
-
-#     if cart_item.quantity > 1:
-#         cart_item.quantity -= 1
-#         cart_item.save()
-        
-#         # Update total price
-#         cart_item.total_price = cart_item.product.price * cart_item.quantity
-#         cart_item.save()
-
-#         # Recalculate total cart price
-#         cart_items = CartItem.objects.filter(user=request.user)
-#         total_cart_price = sum(item.total_price for item in cart_items)
-        
-#         return JsonResponse({
-#             'quantity': cart_item.quantity,
-#             'total': cart_item.total_price,
-#             'final_total': total_cart_price
-#         }, status=200)
-#     else:
-#         return JsonResponse({'error': 'Quantity cannot be less than 1'}, status=400)
-    
-    
-# def increase_quantity(request, cart_item_id):
-#     cart_item = get_object_or_404(CartItem, pk=cart_item_id)
-
-#     # Increase the quantity
-#     cart_item.quantity += 1
-#     cart_item.save()
-    
-#     # Update total price
-#     cart_item.total_price = cart_item.product.price * cart_item.quantity
-#     cart_item.save()
-    
-#     # Recalculate total cart price
-#     cart_items = CartItem.objects.filter(user=request.user)
-#     total_cart_price = sum(item.total_price for item in cart_items)
-
-#     return JsonResponse({
-#         'quantity': cart_item.quantity,
-#         'total': cart_item.total_price,
-#         'final_total': total_cart_price
-#     }, status=200)
+        return JsonResponse({'msg':'This product is out of stock.'},status = 201),
+   
 
 def wishlist(request):
     wishlist_item = WishlistItem.objects.filter(user=request.user)
@@ -596,208 +443,26 @@ def remove_from_wishlist(request, item_id):
 
 
 
-
-# def checkout_view(request):
-#     if request.method == 'POST':
-        
-#         return redirect('core:order_placed')
-
-#     user_addresses = Address.objects.filter(user=request.user)
-    
-#     # Retrieve the user's cart if it exists
-#     user_cart = Cart.objects.filter(user=request.user).first()
-
-#     total_cart_price = 0
-#     cart_items = []
-#     if user_cart:
-#         cart_items = user_cart.items.all()
-#         # Calculate the total price of all cart items
-#         total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
-    
-#     context = {
-#         'user_addresses': user_addresses,
-#         'total_cart_price': total_cart_price,
-#         'cart_items':cart_items,
-#     }
-    
-#     return render(request, 'core/checkout.html', context)
-
-
-# @login_required
-# def checkout_view(request):
-#     user = request.user
-#     user_addresses = Address.objects.filter(user=user)
-#     user_cart = Cart.objects.filter(user=user).first()
-
-#     total_cart_price = 0
-#     cart_items = []
-#     if user_cart:
-#         cart_items = user_cart.items.all()
-#         # Calculate the total price of all cart items
-#         total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
-
-#     address_form = AddressSelectionForm(user=user)
-#     payment_form = PaymentOptionForm()
-
-#     if request.method == 'POST':
-#         street_address = request.POST.get('street_address')
-#         city = request.POST.get('city')
-#         state = request.POST.get('state')
-#         postal_code = request.POST.get('postal_code')
-#         country = request.POST.get('country')
-
-#         address = Address.objects.create(
-#             user=user,
-#             street_address=street_address,
-#             city=city,
-#             state=state,
-#             postal_code=postal_code,
-#             country=country
-#         )
-
-#         if address:
-#             return JsonResponse({'success':True,'address_id':address.id})
-#         else:
-#             return JsonResponse({'success':False,'error':'Failed to create new'})
-        
-
-#     if request.method == 'POST':
-#         address_form = AddressSelectionForm(user=user, data=request.POST)
-#         payment_form = PaymentOptionForm(request.POST)
-#         if address_form.is_valid() and payment_form.is_valid():
-#             shipping_address_id = address_form.cleaned_data['shipping_address'].id
-#             payment_option = payment_form.cleaned_data['payment_option']
-
-#             # Create a new order instance
-#             order = Order.objects.create(
-#                 user=user,
-#                 total_amount=total_cart_price,
-#                 shipping_address_id=shipping_address_id
-#             )
-
-#             # Create order items for each cart item
-#             for cart_item in cart_items:
-#                 OrderItem.objects.create(
-#                     order=order,
-#                     product=cart_item.product,
-#                     quantity=cart_item.quantity
-#                 )
-
-#             # Clear the user's cart after placing the order
-#             for item in user_cart.items.all():
-#                 item.delete()
-
-#             # Redirect to the order placed page
-#             return redirect('core:order_placed')
-#         else:
-#             messages.error(request, "Please fill in all the required fields.")
-
-#     context = {
-#         'address_form': address_form,
-#         'payment_form': payment_form,
-#         'total_cart_price': total_cart_price,
-#         'cart_items': cart_items,
-#     }
-
-#     return render(request, 'core/checkout.html', context)
-
-
-
-
-# copy before  modifying
-# @login_required
-# def checkout_view(request):
-#     user = request.user
-#     user_addresses = Address.objects.filter(user=user)
-#     user_cart = Cart.objects.filter(user=user).first()
-
-#     total_cart_price = 0
-#     cart_items = []
-#     if user_cart:
-#         cart_items = user_cart.items.all()
-#         # Calculate the total price of all cart items
-#         total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
-
-#     address_form = AddressSelectionForm(user=user)
-#     payment_form = PaymentOptionForm()
-
-#     if request.method == 'POST':
-#         street_address = request.POST.get('street_address')
-#         city = request.POST.get('city')
-#         state = request.POST.get('state')
-#         postal_code = request.POST.get('postal_code')
-#         country = request.POST.get('country')
-
-#         address = Address.objects.create(
-#             user=user,
-#             street_address=street_address,
-#             city=city,
-#             state=state,
-#             postal_code=postal_code,
-#             country=country
-#         )
-
-#     context = {
-#         'address_form': address_form,
-#         'payment_form': payment_form,
-#         'total_cart_price': total_cart_price,
-#         'cart_items': cart_items,
-#     }
-
-#     return render(request, 'core/checkout.html', context)
-
-
-
-
-@login_required
-def checkout_view(request):
-    user = request.user
-    user_addresses = Address.objects.filter(user=user)
-    user_cart = Cart.objects.filter(user=user).first()
-
-    
-    
-
-    total_cart_price = 0
-    cart_items = []
-    if user_cart:
-        cart_items = user_cart.items.all()
-        # Calculate the total price of all cart items
-        
-        total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
-
-    address_form = AddressSelectionForm(user=user)
-    #payment_form = PaymentOptionForm()
-
-    if request.method == 'POST':
-        street_address = request.POST.get('street_address')
-        city = request.POST.get('city')
-        state = request.POST.get('state')
-        postal_code = request.POST.get('postal_code')
-        country = request.POST.get('country')
-
-        address = Address.objects.create(
-            user=user,
-            street_address=street_address,
-            city=city,
-            state=state,
-            postal_code=postal_code,
-            country=country
+def create_order(user, cart_items, total_cart_price, shipping_address_id):
+    # Create a new order instance
+    order = Order.objects.create(
+        user=user,
+        total_amount=total_cart_price,
+        shipping_address_id=shipping_address_id
+    )
+    # Create order items for each cart item
+    for cart_item in cart_items:
+        OrderItem.objects.create(
+            order=order,
+            product=cart_item.product,
+            quantity=cart_item.quantity
         )
+    # Clear the user's cart after placing the order
+    for item in user.cart.items.all():
+        item.delete()
 
 
-    
 
-
-    context = {
-        'address_form': address_form,
-        #'payment_form': payment_form,
-        'total_cart_price': total_cart_price,
-        'cart_items': cart_items,
-        #'paypal_payment_button': paypal_payment_button
-    }
-
-    return render(request, 'core/checkout.html', context)
 
 
 def payment_complete(request):
@@ -809,43 +474,38 @@ def payment_failed(request):
 
 
 
-def order_placed(request):
+def cash_on_delivery(request):
     user = request.user
     user_cart = Cart.objects.filter(user=user).first()
     if user_cart:
         cart_items = user_cart.items.all()
         # Calculate the total price of all cart items
         total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
+    addresses = Address.objects.filter(user=user)
 
-    address_form = AddressSelectionForm(user=user)
-    payment_form = PaymentOptionForm()
-
-    address_form = AddressSelectionForm(user=user, data=request.POST)
-    payment_form = PaymentOptionForm(request.POST)
-    if address_form.is_valid() and payment_form.is_valid():
-        shipping_address_id = address_form.cleaned_data['shipping_address'].id
-        #payment_option = payment_form.cleaned_data['payment_option']
-
-
+    shipping_address_id = request.POST.get('shipping_address')
+    print(shipping_address_id)
                 # Create a new order instance
-        order = Order.objects.create(
+    order = Order.objects.create(
                     user=user,
                     total_amount=total_cart_price,
                     shipping_address_id=shipping_address_id
                 )
 
-                # Create order items for each cart item
-        for cart_item in cart_items:
+                
+    for cart_item in cart_items:
             OrderItem.objects.create(
                         order=order,
                         product=cart_item.product,
                         quantity=cart_item.quantity
                     )
 
-                # Clear the user's cart after placing the order
-        for item in user_cart.items.all():
+                
+    for item in user_cart.items.all():
                     item.delete()
-    return render(request, 'core/order_placed.html')
+
+   
+    return render(request, 'core/order_placed.html',{"addresses":addresses})
 
 
 def orders(request):
@@ -857,18 +517,17 @@ def orders(request):
         except Order.DoesNotExist:
             pass
         return redirect('core:orders')
-    # Retrieve the user's orders ordered by creation time
+    
     user_orders = Order.objects.filter(user=request.user).order_by('-created_at')
 
-    # Iterate through each order and fetch associated order items
+    
     for order in user_orders:
-        # Fetch all order items related to the current order
+        
         order_items = OrderItem.objects.filter(order=order)
 
-        # Create a list to store product details and quantities for the current order
         order.product_details = []
 
-        # Iterate through each order item to retrieve product details and quantities
+        
         for order_item in order_items:
             product_detail = {
                 'product_title': order_item.product.title,
@@ -890,7 +549,135 @@ def search_view(request):
 
     if form.is_valid():
         query = form.cleaned_data['query']
-        # Perform search logic here, e.g., filtering products based on the query
+        
         products = Product.objects.filter(title__icontains=query)
 
     return render(request, 'core/search_result.html', {'form': form, 'products': products})
+
+
+
+
+@login_required
+def order_checkout(request):
+    user = request.user
+    print(user)
+    user_cart = Cart.objects.filter(user=user).first()
+
+    total_cart_price = 0
+    cart_items = []
+    if user_cart:
+        cart_items = user_cart.items.all()
+                    
+        total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
+
+    addresses = Address.objects.filter(user=user)
+    coupon_code = request.GET.get('coupon_code')
+
+    if coupon_code:
+        
+        coupon = Coupon.objects.filter(code=coupon_code).first()
+
+        if coupon:
+            discount_percentage = coupon.discount / 100
+            total_cart_price -= total_cart_price * discount_percentage
+    
+    if request.method == 'POST':
+
+        street_address = request.POST.get('street_address')
+        city = request.POST.get('city')
+        state = request.POST.get('state')
+        postal_code = request.POST.get('postal_code')
+        country = request.POST.get('country')
+
+        Address.objects.create(
+            user=request.user,
+            street_address=street_address,
+            city=city,
+            state=state,
+            postal_code=postal_code,
+            country=country
+        )
+        return HttpResponseRedirect(reverse('core:order_checkout'))
+
+    shipping_address_id = request.POST.get('shipping_address')
+    print(shipping_address_id)
+
+    order = Order.objects.create(
+                    user=user,
+                    total_amount=total_cart_price,
+                    shipping_address_id=shipping_address_id
+                )
+
+               
+    for cart_item in cart_items:
+            OrderItem.objects.create(
+                        order=order,
+                        product=cart_item.product,
+                        quantity=cart_item.quantity
+                    )
+
+               
+    for item in user_cart.items.all():
+                    item.delete()
+    
+
+    
+   
+
+    host = request.get_host()
+    paypal_dict = {
+        'business': settings.PAYPAL_RECEIVER_EMAIL,
+        'amount': total_cart_price,
+        'item_name': "Order-Item-No-19",
+        'invoice': "INVOICE_NO-19",
+        'currency_code': "USD",
+        'notify_url': 'http://{}{}'.format(host, reverse("core:paypal-ipn")),
+        'return_url': 'http://{}{}'.format(host, reverse("core:payment_complete")),
+        'cancel_url': 'http://{}{}'.format(host, reverse("core:payment_failed")),
+    }
+    paypal_payment_button = PayPalPaymentsForm(initial=paypal_dict)           
+    context={
+        "total": total_cart_price,
+        "cart_items": cart_items,
+        'addresses':addresses,
+        'paypal_payment_button':paypal_payment_button,
+    }
+    return render(request, 'core/order_checkout.html',context)
+    
+
+
+def return_product(request,order_id):
+    order = Order.objects.get(id=order_id)
+    print(order)
+    total_price = order.total_amount
+    print(total_price)
+    user = request.user
+
+    wallet_instance, created = wallet.objects.get_or_create(user=user)
+
+        
+    wallet_instance.Amount += total_price
+    wallet_instance.save()
+    wal = get_object_or_404(wallet,user=request.user)
+    return render(request,'core\wallet.html',{'wallet':wal})
+    
+
+def user_wallet(request):
+    wal = get_object_or_404(wallet,user=request.user)
+    return render(request,'core/wallet.html',{'wallet':wal}) 
+
+def user_coupons(request):
+    coupons = Coupon.objects.all
+    return render(request, 'core/coupons.html',{'coupons':coupons}) 
+
+
+def apply_coupun(request):
+    pass
+
+def checkout(request):
+    user=request.user
+    addresses = Address.objects.filter(user=user)
+    context={
+        'addresses':addresses
+    }
+    return render(request, 'core/checkout.html',context)  

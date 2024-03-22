@@ -53,7 +53,7 @@
                                                             <form method="POST" action="{% url 'appadmin:update_order_status' order.order_id %}">
                                                                 {% csrf_token %}
                                                           
-                                                            <select name="product_status" default="select" id="product_status" {% if order.status == 'cancelled' or order.status == 'delivered' %}disabled{% endif %}>
+                                                            <select name="product_status" default="select" id="product_status" {% if order.status == 'canceled' or order.status == 'delivered' %}disabled{% endif %}>
                                                                 {% comment %} <option value="select" >------</option> {% endcomment %}
                                                                 
                                                                 <option value="processing" {% if o.product_status == 'processing' %}selected{% endif %}>Processing</option>
