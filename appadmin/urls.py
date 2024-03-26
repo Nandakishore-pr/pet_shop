@@ -29,4 +29,5 @@ urlpatterns = [
     path('banner/',views.banner,name= 'banner'),
     path('sales_report',views.sales_report,name='sales_report'),
     path('offres',views.offres,name='offres'),
+    path('create_product_offer',views.create_product_offer,name='create_product_offer'),
 ]

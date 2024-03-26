@@ -151,7 +151,7 @@
                                                 <div class="modal-content">
                                                     <span class="close">&times;</span>
                                                     <!-- Add New Address Form -->
-                                                   <form id="add-address-form" method="post" action="{% url 'core:add_address' %}">
+                                                   <form  method="post" action="{% url 'core:add_address' %}?source=profile_address">
                                                         {% csrf_token %}
                                                         <!-- Add form fields for the new address -->
                                                         <!-- Example: -->
@@ -175,7 +175,7 @@
                                         <span class="close">&times;</span>
                                         <!-- Edit Address Form -->
                                         {% comment %} action="{% url 'core:edit_address' address_id=address_id %}" {% endcomment %}
-                                        <form id="edit-address-form" method="post"  >
+                                        <form  method="post"  >
                                             {% csrf_token %}
                                             <!-- Example: Populate the form fields with address details -->
                                             <input type="text" name="street_address" placeholder="Street Address" value="{{ address.street_address }}">

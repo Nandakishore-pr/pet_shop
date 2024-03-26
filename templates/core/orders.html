@@ -22,10 +22,10 @@
         text-align: center; /* Align the button in the center */
     }
 </style>
-
-<h2 style="text-align:center">Your Orders</h2>
+<div class='container'>
+<h2 style="text-align:center">Your Orders</h2> <br>
 {% if user_orders %}
-    <table>
+    <table class="table table-bordered table-striped">
         <thead>
             <tr>
                 <th>Order ID</th>
@@ -41,7 +41,7 @@
             {% for order in user_orders %}
                 <tr>
                     <td>{{ order.id }}</td>
-                    <td>${{ order.total_amount }}</td>
+                    <td>₹{{ order.total_amount }}</td>
                     <td>{{ order.shipping_address }}</td>
                     <td>
                         {% for product_detail in order.product_details %}
@@ -69,5 +69,5 @@
 {% else %}
     <p>No orders found.</p>
 {% endif %}
-
+</div>
 {% endblock %}

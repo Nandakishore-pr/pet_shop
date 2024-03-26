@@ -2,33 +2,34 @@
 {% load static %}
 {% block content %}
 
-<h2>Coupons</h2>
-<div>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>code</th>
-                <th>Discount</th>
-                <th>Active date</th>
-                <th>Expiry date</th>
-                
-                <!-- Add more columns as needed -->
-            </tr>
-        </thead>
-        <tbody>
-            {% for coupon in coupons %}
-            <tr>
-                <td>{{ coupon.id }}</td>
-                <td>{{ coupon.code }}</td>
-                <td>{{ coupon.discount }}%</td>
-                <td>{{coupon.active_date}}</td>
-                <td>{{coupon.expiry_date}}</td>
-                <!-- Render other coupon fields as needed -->
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="container">
+    <h2 style='text-align:center'>Coupons</h2><br>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Code</th>
+                    <th>Discount</th>
+                    <th>Active Date</th>
+                    <th>Expiry Date</th>
+                    <!-- Add more columns as needed -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for coupon in coupons %}
+                <tr>
+                    <td>{{ coupon.id }}</td>
+                    <td>{{ coupon.code }}</td>
+                    <td>{{ coupon.discount }}%</td>
+                    <td>{{ coupon.active_date }}</td>
+                    <td>{{ coupon.expiry_date }}</td>
+                    <!-- Render other coupon fields as needed -->
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {% endblock %}

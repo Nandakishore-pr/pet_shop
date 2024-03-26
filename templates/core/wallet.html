@@ -1,16 +1,51 @@
 {% extends "base/base.html" %}
 {% load static %}
 {% block content %}
-
-
 <style>
-    .wal-amount{
-        text-align:center;
-        font-size:20px;
+    .wal-amount {
+        text-align: center;
+        font-size: 20px;
     }
+    
 </style>
 
-<h2 style='text-align:center'>Wallet</h2>
-<p class = 'wal-amount'>{{ wallet.Amount }} rupees in your wallet</p>
 
+
+<div class="container">
+    <h3 style='text-align:center'>WALLET</h3>
+    <br>
+    {% if return_orders %}
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    {% comment %} <th>Image</th> {% endcomment %}
+                    <th>Product Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order_detail in return_orders %}
+                    <tr>
+                        {% comment %} <td><img src="{{ order_detail.product.image.url }}" alt="{{ order_detail.product.name }}" style="max-width: 100px;"></td> {% endcomment %}
+                        <td>{{ order_detail.product.title }}</td>
+                        <td>{{ order_detail.product.price }}</td>
+                        <td>{{ order_detail.quantity }}</td>
+                        <td style='color:#15d31a'>+{{ order_detail.total_product_price }}</td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="2"></td>
+                    <td colspan="1"><strong>Total Price:</strong></td>
+                    <td colspan="1" ><strong id='final_total'>₹{{ returned_amount }}</strong></td>
+                    
+                </tr>
+            </tbody>
+        </table>
+        
+    {% else %}
+        <p>No canceled orders found.</p>
+    {% endif %}
+</div>
 {% endblock %}

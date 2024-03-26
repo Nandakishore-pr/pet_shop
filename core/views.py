@@ -8,11 +8,11 @@ from django.contrib.auth import update_session_auth_hash
 from account.forms import  UserProfileForm,AddressForm
 from account.models import Profile,Address,User
 from django.http import HttpResponseBadRequest,JsonResponse,HttpResponseRedirect,HttpResponse
-from core.forms import ProductSearchForm
+from core.forms import ProductSearchForm,AddressSelectionForm
 import json
 from django.views.decorators.http import require_POST
 
-
+from decimal import Decimal
 from django.urls import reverse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
@@ -241,28 +241,35 @@ def edit_profile(request):
 
 
 def add_address(request):
+    source = request.GET.get('source', None)
+    
     if request.method == 'POST':
-        
-        # Extract address data from the form
-        street_address = request.POST.get('street_address')
-        city = request.POST.get('city')
-        state = request.POST.get('state')
-        postal_code = request.POST.get('postal_code')
-        country = request.POST.get('country')
-        
+            
+            # Extract address data from the form
+            street_address = request.POST.get('street_address')
+            city = request.POST.get('city')
+            state = request.POST.get('state')
+            postal_code = request.POST.get('postal_code')
+            country = request.POST.get('country')
+            
 
-        # Assuming 'Address' is the model for storing addresses
-        # Create a new address object and save it to the database
-        Address.objects.create(
-            user=request.user,
-            street_address=street_address,
-            city=city,
-            state=state,
-            postal_code=postal_code,
-            country=country
-        )
+            # Assuming 'Address' is the model for storing addresses
+            # Create a new address object and save it to the database
+            Address.objects.create(
+                user=request.user,
+                street_address=street_address,
+                city=city,
+                state=state,
+                postal_code=postal_code,
+                country=country
+            )
+            if source == 'profile_address':
+                return redirect('core:profile_view')
+            elif source == 'checkout_address':
+                return redirect('core:checkout')
+    return HttpResponse("Invalid request")
         
-    return redirect('core:profile_view')
+        
 
 
 def delete_address(request, address_id):
@@ -276,6 +283,7 @@ def delete_address(request, address_id):
 
 def edit_address(request, address_id):
     address = get_object_or_404(Address, id=address_id)
+    print(address_id)
     if request.method == 'POST':
         form = AddressForm(request.POST, instance=address)
         if form.is_valid():
@@ -299,6 +307,7 @@ def cart_view(request):
 
     if user_cart:
         cart_items = user_cart.items.all()
+
         for cart_item in cart_items:
             cart_item.total_price = cart_item.product.price * cart_item.quantity
         total_cart_price = sum(cart_item.total_price for cart_item in cart_items)
@@ -320,6 +329,7 @@ def add_to_cart(request):
         if product_pid:
             try:
                 product = Product.objects.get(pid=product_pid)
+
                 user_cart, created = Cart.objects.get_or_create(user=request.user)
                 cart_item, item_created = CartItem.objects.get_or_create(cart=user_cart, product=product)
 
@@ -376,29 +386,27 @@ def decrease_quantity(request, cart_item_id,cart_id):
     
 def increase_quantity(request, cart_item_id,cart_id):
     cart_item = get_object_or_404(CartItem, pk=cart_item_id)
-    
+    print(cart_item)
 
     if cart_item.quantity < cart_item.product.stock:
         cart_item.quantity += 1
         cart_item.save()
-        print(cart_item.quantity)
+        
     
 
         total_price = cart_item.product.price * cart_item.quantity
         cart_item.save()
 
         all_products = CartItem.objects.filter(cart_id=cart_id)
-
-        total_quantity = 0
+       
         total = 0
-
+        
+        
         for cart_i in all_products:
-            total_quantity += cart_i.quantity
-            total += cart_i.product.price * cart_item.quantity
-
-        print(total)
-        print(total_quantity)
-        print(cart_item.quantity)
+            
+            total += cart_i.product.price * cart_i.quantity
+            
+        
         return JsonResponse({'q': cart_item.quantity , 'total':total_price,'total_sum':total}, status=200)
     else:
         return JsonResponse({'msg':'This product is out of stock.'},status = 201),
@@ -475,37 +483,7 @@ def payment_failed(request):
 
 
 def cash_on_delivery(request):
-    user = request.user
-    user_cart = Cart.objects.filter(user=user).first()
-    if user_cart:
-        cart_items = user_cart.items.all()
-        # Calculate the total price of all cart items
-        total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
-    addresses = Address.objects.filter(user=user)
-
-    shipping_address_id = request.POST.get('shipping_address')
-    print(shipping_address_id)
-                # Create a new order instance
-    order = Order.objects.create(
-                    user=user,
-                    total_amount=total_cart_price,
-                    shipping_address_id=shipping_address_id
-                )
-
-                
-    for cart_item in cart_items:
-            OrderItem.objects.create(
-                        order=order,
-                        product=cart_item.product,
-                        quantity=cart_item.quantity
-                    )
-
-                
-    for item in user_cart.items.all():
-                    item.delete()
-
-   
-    return render(request, 'core/order_placed.html',{"addresses":addresses})
+    return render(request, 'core/order_placed.html')
 
 
 def orders(request):
@@ -557,95 +535,6 @@ def search_view(request):
 
 
 
-@login_required
-def order_checkout(request):
-    user = request.user
-    print(user)
-    user_cart = Cart.objects.filter(user=user).first()
-
-    total_cart_price = 0
-    cart_items = []
-    if user_cart:
-        cart_items = user_cart.items.all()
-                    
-        total_cart_price = sum(cart_item.product.price * cart_item.quantity for cart_item in cart_items)
-
-    addresses = Address.objects.filter(user=user)
-    coupon_code = request.GET.get('coupon_code')
-
-    if coupon_code:
-        
-        coupon = Coupon.objects.filter(code=coupon_code).first()
-
-        if coupon:
-            discount_percentage = coupon.discount / 100
-            total_cart_price -= total_cart_price * discount_percentage
-    
-    if request.method == 'POST':
-
-        street_address = request.POST.get('street_address')
-        city = request.POST.get('city')
-        state = request.POST.get('state')
-        postal_code = request.POST.get('postal_code')
-        country = request.POST.get('country')
-
-        Address.objects.create(
-            user=request.user,
-            street_address=street_address,
-            city=city,
-            state=state,
-            postal_code=postal_code,
-            country=country
-        )
-        return HttpResponseRedirect(reverse('core:order_checkout'))
-
-    shipping_address_id = request.POST.get('shipping_address')
-    print(shipping_address_id)
-
-    order = Order.objects.create(
-                    user=user,
-                    total_amount=total_cart_price,
-                    shipping_address_id=shipping_address_id
-                )
-
-               
-    for cart_item in cart_items:
-            OrderItem.objects.create(
-                        order=order,
-                        product=cart_item.product,
-                        quantity=cart_item.quantity
-                    )
-
-               
-    for item in user_cart.items.all():
-                    item.delete()
-    
-
-    
-   
-
-    host = request.get_host()
-    paypal_dict = {
-        'business': settings.PAYPAL_RECEIVER_EMAIL,
-        'amount': total_cart_price,
-        'item_name': "Order-Item-No-19",
-        'invoice': "INVOICE_NO-19",
-        'currency_code': "USD",
-        'notify_url': 'http://{}{}'.format(host, reverse("core:paypal-ipn")),
-        'return_url': 'http://{}{}'.format(host, reverse("core:payment_complete")),
-        'cancel_url': 'http://{}{}'.format(host, reverse("core:payment_failed")),
-    }
-    paypal_payment_button = PayPalPaymentsForm(initial=paypal_dict)           
-    context={
-        "total": total_cart_price,
-        "cart_items": cart_items,
-        'addresses':addresses,
-        'paypal_payment_button':paypal_payment_button,
-    }
-    return render(request, 'core/order_checkout.html',context)
-    
-
-
 def return_product(request,order_id):
     order = Order.objects.get(id=order_id)
     print(order)
@@ -659,25 +548,151 @@ def return_product(request,order_id):
     wallet_instance.Amount += total_price
     wallet_instance.save()
     wal = get_object_or_404(wallet,user=request.user)
-    return render(request,'core\wallet.html',{'wallet':wal})
+    return redirect('core:orders')
     
 
 def user_wallet(request):
-    wal = get_object_or_404(wallet,user=request.user)
-    return render(request,'core/wallet.html',{'wallet':wal}) 
+    # Retrieve the wallet object associated with the user
+    wallet_obj = get_object_or_404(wallet, user=request.user)
+    
+    # Retrieve canceled orders associated with the user
+    returned_orders = Order.objects.filter(user=request.user, status='delivered')
+    
+    
+    
+    returned_amount = 0
+    returned_orders_details = []
+    for order in returned_orders:
+        order_items = OrderItem.objects.filter(order=order)
+        print(order_items)
+        for item in order_items:
+            
+            total_product_price = item.product.price * item.quantity
+            
+            returned_orders_details.append({
+                'product': item.product,
+                'quantity': item.quantity,
+                'total_product_price':total_product_price
+            })
+        
+            returned_amount += total_product_price
+        
+
+    context = {
+        'wallet': wallet_obj,
+        'return_orders': returned_orders_details,
+        'returned_amount': returned_amount,
+    }
+    
+    return render(request, 'core/wallet.html', context)
+
+
 
 def user_coupons(request):
     coupons = Coupon.objects.all
     return render(request, 'core/coupons.html',{'coupons':coupons}) 
 
 
-def apply_coupun(request):
-    pass
+
+
+
+
 
 def checkout(request):
-    user=request.user
-    addresses = Address.objects.filter(user=user)
-    context={
-        'addresses':addresses
+    user = request.user
+    user_cart = Cart.objects.filter(user=user).first()
+    form = AddressSelectionForm(user)
+    total_cart_price = Decimal(0)
+    cart_items = []
+    
+    if user_cart:
+        cart_items = user_cart.items.all()
+        for cart_item in cart_items:
+            cart_item.total_price = cart_item.product.price * cart_item.quantity
+            total_cart_price += cart_item.total_price
+    print(total_cart_price)
+
+
+    if request.method == 'POST':
+
+        if 'coupon_code' in request.POST:
+            coupon_code = request.POST.get('coupon_code')
+            coupon = Coupon.objects.filter(code=coupon_code).first()
+
+            if coupon:
+                discount_amount = total_cart_price * (coupon.discount / Decimal(100))
+                total_cart_price -= discount_amount
+                print(total_cart_price)
+                messages.success(request, f"Coupon '{coupon.code}' applied successfully!")
+            else:
+                messages.error(request, "Invalid coupon code!")
+
+            host = request.get_host()
+            paypal_dict = {
+                'business': settings.PAYPAL_RECEIVER_EMAIL,
+                'amount': total_cart_price,
+                'item_name': "Order-Item-No-40",
+                'invoice': "INVOICE_NO-40",
+                'currency_code': "USD",
+                'notify_url': 'http://{}{}'.format(host, reverse("core:paypal-ipn")),
+                'return_url': 'http://{}{}'.format(host, reverse("core:payment_complete")),
+                'cancel_url': 'http://{}{}'.format(host, reverse("core:payment_failed")),
+            }
+            paypal_payment_button = PayPalPaymentsForm(initial=paypal_dict)
+
+            context = {
+                'form': form,
+                'cart_items': cart_items,
+                'total_cart_price': total_cart_price,
+                'paypal_payment_button': paypal_payment_button,
+            }
+            
+            return render(request, 'core/checkout.html', context)
+
+        elif 'selected_address_id' in request.POST:
+
+            shipping_address_id = request.POST.get('selected_address_id')
+            order = Order.objects.create(
+                        user=user,
+                        total_amount=total_cart_price,
+                        shipping_address_id=shipping_address_id
+                    )
+            
+            print(total_cart_price)
+            
+            for cart_item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=cart_item.product,
+                    quantity=cart_item.quantity
+                )
+            
+            for item in user_cart.items.all():
+                item.delete()
+            
+        
+    host = request.get_host()
+    paypal_dict = {
+        'business': settings.PAYPAL_RECEIVER_EMAIL,
+        'amount': total_cart_price,
+        'item_name': "Order-Item-No-40",
+        'invoice': "INVOICE_NO-40",
+        'currency_code': "USD",
+        'notify_url': 'http://{}{}'.format(host, reverse("core:paypal-ipn")),
+        'return_url': 'http://{}{}'.format(host, reverse("core:payment_complete")),
+        'cancel_url': 'http://{}{}'.format(host, reverse("core:payment_failed")),
     }
-    return render(request, 'core/checkout.html',context)  
+    paypal_payment_button = PayPalPaymentsForm(initial=paypal_dict)
+    
+    context = {
+        'form': form,
+        'cart_items': cart_items,
+        'total_cart_price': total_cart_price,
+        'paypal_payment_button': paypal_payment_button,
+    }
+    
+    return render(request, 'core/checkout.html', context)   
+
+
+
+

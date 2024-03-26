@@ -494,7 +494,7 @@ def sales_report(request):
     context = {
         'orders': orders,
         'start_date_value': start_date_value,
-        'end_date_value': end_date_value
+        'end_date_value': end_date_value,
     }
 
     return render(request, 'appadmin/sales_report.html', context)
@@ -502,3 +502,7 @@ def sales_report(request):
 
 def offres(request):
     return render(request,'appadmin/offers.html')
+
+
+def create_product_offer(request):
+    return render(request,'appadmin/create_product_offer.html')

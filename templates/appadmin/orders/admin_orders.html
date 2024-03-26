@@ -28,7 +28,7 @@
                                                 <th>Shipping Address</th>
                                                 <th>Order Items</th>
                                                 <th>Total Amount</th>
-                                                {% comment %} <th>Status</th> {% endcomment %}
+                                                <th>Payment method</th>
                                                 <th>Update Status</th>
                                             </tr>
                                         </thead>
@@ -47,7 +47,7 @@
                                                             </ul>
                                                         </td>
                                                         <td>${{ order.total_amount }}</td>
-                                                        {% comment %} <td>{{order_info.status}}</td> {% endcomment %}
+                                                        <td>{{order_info.status}}</td> 
                                                         <td>
                                                             
                                                             <form method="POST" action="{% url 'appadmin:update_order_status' order.order_id %}">

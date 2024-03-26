@@ -6,7 +6,7 @@
     .checkout-btn {
         display: flex;
         justify-content: flex-end;
-        margin-right: 150px;
+        margin-right: 18em;
         margin-bottom: 30px;
     }
 
@@ -17,16 +17,23 @@
         margin-bottom: 30px;
     }
 
-    .table-align {
-        margin-left: 40px;
+    .inc-bt{
+        background: #D90E8C;
+        border:None;
+        border-radius:10%;
     }
-    
-</style>
+    .align-total{
+        margin-left:30em;
+    }
 
+   
+</style>
+<div class='container'>
 {% if cart_items %}
     <h2 style='text-align:center'>Cart Items</h2>
     <br>
-    <table class="table table-align">
+    <div class="table-responsive">
+    <table class="table table-bordered table-striped">
         <thead>
             <tr>
                 <th>Image</th>
@@ -45,16 +52,25 @@
                     <td>${{ cart_item.product.price }}</td>
                     <td>
                         
-                            <button onclick="decreaseQuantity('{{ cart_item.id }}' , '{{ cart_item.cart_id }}')">-</button>
+                            <button class='inc-bt'onclick="decreaseQuantity('{{ cart_item.id }}' , '{{ cart_item.cart_id }}')">-</button>
                             <span id="quantity{{ cart_item.id }}">{{ cart_item.quantity }}</span>
-                            <button onclick="increaseQuantity('{{ cart_item.id }}', '{{ cart_item.cart_id }}')" >+</button>
+                            <button class='inc-bt' onclick="increaseQuantity('{{ cart_item.id }}', '{{ cart_item.cart_id }}')" >+</button>
                         
                     </td>
                     <td><span id=total{{ cart_item.id }}>₹{{ cart_item.total_price }} </span></td>
                     <td><button class='btn primary-btn' onclick="removeFromCart('{{ cart_item.id }}')">Remove</button></td>
                 </tr>
             {% endfor %} 
+            
             <div id='toast' class='toast'></div>
+            <tr>
+                <td colspan="3"></td>
+                <td colspan="1"><strong>Total Price:</strong></td>
+                <td colspan="1" ><strong id='final_total'>₹{{ total_cart_price }}</strong></td>
+                <td colspan="1"> </td> 
+
+            </tr>
+            
 
             {% comment %} {% for cart_item in cart_items %}
                 <tr>
@@ -71,13 +87,15 @@
                 </tr>
             {% endfor %} {% endcomment %}
 
+            
         </tbody>
     </table>
-    <div class='price-align' >
-        <h4 id=final_total> ₹{{ total_cart_price }}</h4>
-    </div>
+    
+</div>
+</div>
+
     <div class='checkout-btn'>
-        <button class='btn primary-btn'><a href="{% url "core:order_checkout" %}" style='color:white'>checkout</a></button>
+        <button class='btn primary-btn'><a href="{% url "core:checkout" %}" style='color:white'>checkout</a></button>
     </div>
 {% else %}
     <h2 style="text-align:center">Your cart is empty.</h2>

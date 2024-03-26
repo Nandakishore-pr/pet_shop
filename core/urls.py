@@ -34,7 +34,7 @@ urlpatterns = [
     path('payment_failed',views.payment_failed,name='payment_failed'),
 
 
-    path('order_checkout/',views.order_checkout,name='order_checkout'),
+    # path('order_checkout/',views.order_checkout,name='order_checkout'),
     path('return_product/<int:order_id>/',views.return_product,name='return_product'),
     path('user_wallet/',views.user_wallet,name='user_wallet'),
     path('user_coupons/',views.user_coupons,name='user_coupons'),
