@@ -1,7 +1,49 @@
 {% extends "base/base.html" %}
 {% load static %}
+
 {% block content %}
+<div class="container">
+    <h1>Order Complete</h1>
+    <h2>Order Details</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Total Amount</th>
+                <th>Shipping Address</th>
+                <!-- Add more details as needed -->
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>${{ order.total_amount }}</td>
+                <td>{{ order.shipping_address }}</td>
+                <!-- Add more details as needed -->
+            </tr>
+        </tbody>
+    </table>
 
-<h1>payment completed</h1>
-
+    <h2>Order Items</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order_items %}
+            <tr>
+                <td>{{ item.product }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.product.price }}</td>
+                <td>${{ item.total_price }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

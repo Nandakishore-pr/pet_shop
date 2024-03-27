@@ -604,6 +604,7 @@ def checkout(request):
     form = AddressSelectionForm(user)
     total_cart_price = Decimal(0)
     cart_items = []
+    order = None
     
     if user_cart:
         cart_items = user_cart.items.all()
@@ -623,16 +624,17 @@ def checkout(request):
                 discount_amount = total_cart_price * (coupon.discount / Decimal(100))
                 total_cart_price -= discount_amount
                 print(total_cart_price)
-                messages.success(request, f"Coupon '{coupon.code}' applied successfully!")
+                message = messages.success(request, f"Coupon '{coupon.code}' applied successfully!")
             else:
                 messages.error(request, "Invalid coupon code!")
 
+        
             host = request.get_host()
             paypal_dict = {
                 'business': settings.PAYPAL_RECEIVER_EMAIL,
                 'amount': total_cart_price,
-                'item_name': "Order-Item-No-40",
-                'invoice': "INVOICE_NO-40",
+                'item_name': "Order-Item-No-908210002", 
+                'invoice': "INVOICE_NO-908210002" ,
                 'currency_code': "USD",
                 'notify_url': 'http://{}{}'.format(host, reverse("core:paypal-ipn")),
                 'return_url': 'http://{}{}'.format(host, reverse("core:payment_complete")),
@@ -645,6 +647,7 @@ def checkout(request):
                 'cart_items': cart_items,
                 'total_cart_price': total_cart_price,
                 'paypal_payment_button': paypal_payment_button,
+                
             }
             
             return render(request, 'core/checkout.html', context)
@@ -669,14 +672,15 @@ def checkout(request):
             
             for item in user_cart.items.all():
                 item.delete()
-            
-        
+    # order_no = Order.objects.get(pk=order.pk)
+    
+    
     host = request.get_host()
     paypal_dict = {
         'business': settings.PAYPAL_RECEIVER_EMAIL,
         'amount': total_cart_price,
-        'item_name': "Order-Item-No-40",
-        'invoice': "INVOICE_NO-40",
+        'item_name': "Order-Item-No-908210002" ,
+        'invoice': "INVOICE_NO-908210002" ,
         'currency_code': "USD",
         'notify_url': 'http://{}{}'.format(host, reverse("core:paypal-ipn")),
         'return_url': 'http://{}{}'.format(host, reverse("core:payment_complete")),

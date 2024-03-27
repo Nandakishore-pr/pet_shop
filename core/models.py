@@ -224,7 +224,8 @@ class ProductOffer(models.Model):
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
     active = models.BooleanField(default=False)
-    
+    products = models.ManyToManyField(Product, related_name='offers')
+
     def __str__(self):
         return f"{self.discount_percentage}% Discount"
 
@@ -232,22 +233,24 @@ class ProductOffer(models.Model):
         # Ensure discount_percentage is Decimal type
         if not isinstance(self.discount_percentage, Decimal):
             self.discount_percentage = Decimal(str(self.discount_percentage))
+        
         super().save(*args, **kwargs)
-
+    
 
 class CategoryOffer(models.Model):
     cat_discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     cat_start_date = models.DateTimeField(null=True, blank=True)
     cat_end_date = models.DateTimeField(null=True, blank=True)
     cat_active = models.BooleanField(default=False)
+    category = models.ForeignKey(Category,on_delete =models.CASCADE,related_name='category_offers',default = 1)
     
     def __str__(self):
-        return f"{self.discount_percentage}% Discount"
+        return f"{self.cat_discount_percentage}% Discount"
 
     def save(self, *args, **kwargs):
         # Ensure discount_percentage is Decimal type
-        if not isinstance(self.discount_percentage, Decimal):
-            self.discount_percentage = Decimal(str(self.discount_percentage))
+        if not isinstance(self.cat_discount_percentage, Decimal):
+            self.cat_discount_percentage = Decimal(str(self.cat_discount_percentage))
         super().save(*args, **kwargs)
 
 

@@ -5,19 +5,14 @@ from django.contrib.auth import logout,login,get_user_model
 from django.views.decorators.cache import never_cache
 from django.contrib.auth import authenticate,login,logout
 from django.urls import reverse
-from core.models import Category,Product,ProductImages,Subcategory,Order,OrderItem,Coupon
-# from core.forms import ProductEditForm,ProductImagesForm
+from core.models import Category,Product,ProductImages,Subcategory,Order,OrderItem,Coupon,ProductOffer,CategoryOffer
 from account.models import User
 from django.contrib.auth.decorators import login_required
-import calendar
-from django.db.models.functions import ExtractMonth
-from django.db.models import Count, Avg, Sum
+from django.db.models import Sum,F
 from datetime import datetime,timedelta
 from django.utils import timezone
-from django.utils.timezone import make_aware
-
-from django.db.models.functions import TruncMonth, TruncYear
-
+from decimal import Decimal
+from .forms import ProductOfferForm,CategoryOfferForm
 
 
 
@@ -41,17 +36,25 @@ def admin_login(request):
         return render(request, 'appadmin/admin_login.html')
 
 
+
 def admin_index(request):
     if not request.user.is_authenticated:
         return redirect('appadmin:admin_login')
     total_orders = Order.objects.count()
     total_amount = Order.objects.aggregate(total=Sum('total_amount'))['total'] or 0
     total_products = Product.objects.count()
-
+    best_selling_products = OrderItem.objects.values('product__title').annotate(
+        total_quantity=Sum('quantity'),
+        total_price=Sum(F('quantity') * F('product__price'))
+        ).order_by('-total_quantity')[:10]
+    
+ 
     context = {
         'total_orders': total_orders,
         'total_amount': total_amount,
         'total_products': total_products,
+        'best_selling_products':best_selling_products,
+        
     }
 
     
@@ -486,7 +489,6 @@ def sales_report(request):
             start_date = datetime.strptime(start_date, '%Y-%m-%d')
             end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
-            
             orders = Order.objects.filter(created_at__range=(start_date, end_date), status='delivered').order_by('created_at')
             print(orders)
             print("hello")
@@ -500,9 +502,131 @@ def sales_report(request):
     return render(request, 'appadmin/sales_report.html', context)
 
 
-def offres(request):
-    return render(request,'appadmin/offers.html')
+
+def daily_report(request):
+    today = timezone.now().date()
+    daily_orders = Order.objects.filter(created_at__date=today, status='delivered')
+    
+    return render(request, 'appadmin/daily_report.html', {'daily_orders': daily_orders})
+
+def weekly_report(request):
+    today = timezone.now().date()
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+    weekly_orders = Order.objects.filter(created_at__range=(start_of_week, end_of_week), status='delivered')
+    return render(request, 'appadmin/weekly_report.html', {'weekly_orders': weekly_orders})
+
+def monthly_report(request):
+    today = timezone.now().date()
+    start_of_month = today.replace(day=1)
+    end_of_month = start_of_month.replace(day=1, month=start_of_month.month+1) - timedelta(days=1)
+    monthly_orders = Order.objects.filter(created_at__range=(start_of_month, end_of_month), status='delivered')
+    return render(request, 'appadmin/monthly_report.html', {'monthly_orders': monthly_orders})
+
+
+
+def offers(request):
+    product_offers = ProductOffer.objects.all()
+    product= Product.objects.all()
+    
+    category_offer = CategoryOffer.objects.all()
+    # print(category_offer.category_id)
+    category = Category.objects.all()
+    category_dict = {category.cid: category.cname for category in category}
+    for offer in category_offer:
+        offer.category_name = category_dict.get(offer.category_id, 'Unknown Category')
+
+    context={
+        'product_offers': product_offers, 
+        'products':product,
+        'category_offer':category_offer,
+        'category':category,
+    }
+            
+    return render(request, 'appadmin/offers/offer.html', context)
+    
+def delete_product_offer(request, offer_id):
+    product_offer = get_object_or_404(ProductOffer, pk=offer_id)
+    product_offer.delete()
+    
+    return redirect('appadmin:offers')
+
+def edit_product_offer(request, offer_id):
+    product_offer = get_object_or_404(ProductOffer, pk=offer_id)
+    if request.method == 'POST':
+        form = ProductOfferForm(request.POST, instance=product_offer)
+        if form.is_valid():
+            form.save()
+            product = product_offer.products.first()
+
+            if product:
+                product.old_price = product.price
+                product.price -= product.price*(product_offer.discount_percentage/100)
+                product.save()
+            return redirect('appadmin:offers')
+    else:
+        form = ProductOfferForm(instance=product_offer)
+    
+    return render(request, 'appadmin/offers/edit_product_offer.html', {'form': form})
 
 
 def create_product_offer(request):
-    return render(request,'appadmin/create_product_offer.html')
+    
+    if request.method == 'POST':
+        form = ProductOfferForm(request.POST)
+        if form.is_valid():
+            product_offer = form.save()
+            product = product_offer.products.first()
+
+            if product:
+                product.old_price = product.price
+                product.price -= product.price*(product_offer.discount_percentage/100)
+                product.save()
+            return redirect('appadmin:offers')
+    else:
+        form = ProductOfferForm()
+    
+    return render(request, 'appadmin/offers/create_product_offer.html', {'form': form})
+
+def create_category_offer(request):
+    if request.method == "POST":
+        form = CategoryOfferForm(request.POST)
+        if form.is_valid():
+            category_offer = form.save(commit=False)
+            selected_categories = form.cleaned_data['categorys']
+            if selected_categories.exists():
+                category_offer.category = selected_categories[0]
+                category_offer.save()
+
+                # Fetch all products in the selected category
+                products_in_category = Product.objects.filter(category=category_offer.category)
+
+                for product in products_in_category:
+                    product.old_price = product.price
+                    product.price -= product.price * (category_offer.cat_discount_percentage / 100)
+                    product.save()
+
+            return redirect('appadmin:offers')
+    else:
+        form = CategoryOfferForm()
+    return render(request, 'appadmin/offers/create_category_offer.html', {'form': form})
+
+
+
+def delete_category_offer(request,offer_id):
+    category_offer = get_object_or_404(CategoryOffer, pk=offer_id)
+    category_offer.delete()
+
+    return redirect('appadmin:offers')
+
+def edit_category_offer(request,offer_id):
+    category_offer = get_object_or_404(CategoryOffer, pk=offer_id)
+    if request.method == 'POST':
+        form = CategoryOfferForm(request.POST, instance=category_offer)
+        if form.is_valid():
+            form.save()
+            return redirect('appadmin:offers')
+    else:
+        form = CategoryOfferForm(instance=category_offer)
+    
+    return render(request, 'appadmin/offers/edit_category_offer.html', {'form': form})

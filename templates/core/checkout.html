@@ -126,7 +126,12 @@
                         </div>
                         <div>
                             <div class="pay-section">
-                                <a href="{% url "core:cash_on_delivery" %}" class='btn primary-btn'>Pay Cash on Delivery</a>
+                                {% if total_cart_price > 1000 %}
+                                    <button class="btn primary-btn" disabled>Cash on Delivery</button>
+                                    <p>no cash on delivery above 1000</p>
+                                {% else %}
+                                    <a href="{% url 'core:cash_on_delivery' %}" class='btn primary-btn'>Cash on Delivery</a>
+                                {% endif %}
                             </div>
                             <div class="pay-section">
                                 {{ paypal_payment_button.render }} 

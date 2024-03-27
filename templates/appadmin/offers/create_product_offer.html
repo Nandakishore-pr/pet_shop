@@ -1,0 +1,52 @@
+{% extends 'base/admin_base.html' %}
+
+
+{% block content %}
+<style>
+  .align{
+    margin-top : 3rem;
+    margin-left : 3rem;
+  }
+</style>
+<div class="align">
+  <h2>create product offer</h2>
+  <form method="post" >
+    {% csrf_token %}
+
+
+    <div class="mb-1">
+        <label for="cname" class="form-label">discount</label>
+        <div class="col-2">
+            {{ form.discount_percentage }}
+
+        </div>
+    <div class="mb-1">
+      <label for="cname" class="form-label">start date</label>
+      <div class="col-2">
+        {{ form.start_date }}
+      </div>
+    </div>
+    <div class="mb-3">
+      <label for="image" class="form-label">end date</label>
+      <div class="col-2">
+        {{ form.end_date }}
+      </div>
+    </div>
+    
+    <div class="mb-3 form-check">
+        <label for="id_active">Active</label>
+        <div class="col-2">
+        {{ form.active }}
+        </div>
+    </div>
+    <div class="mb-3 form-check">
+        <label for="id_active">select product</label>
+        <div class="col-2">
+        {{ form.products }}
+        </div>
+    </div>
+    <button class='btn btn-primary' type="submit">Submit</button>
+    
+  </form>
+</div>
+{% endblock %}

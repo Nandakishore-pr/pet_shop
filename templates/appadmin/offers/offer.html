@@ -1,0 +1,160 @@
+{% extends "base/admin_base.html" %}
+{% load static %}
+{% block content %}
+
+<section class="content-main">
+    <div class="content-header">
+        <div>
+            <h2 class="content-title card-title"> Product Offers</h2>
+            
+        </div>
+  
+        {% comment %} <div class="alert alert-danger" id="myAlert">
+          {% if messages %}
+          {% for message in messages %}
+          {{message}}
+          {% endfor %}
+          {% endif %}
+        </div> {% endcomment %}
+        <script>
+          // Add a script to hide the alert after 3 seconds
+          setTimeout(function() {
+            var alert = document.getElementById('myAlert');
+            if (alert) {
+              alert.style.display = 'none';
+            }
+          }, 3000);  // 3000 milliseconds = 3 seconds
+        </script>
+  
+  
+        <div>
+  
+            <a href="{% url 'appadmin:create_product_offer' %}" class="btn btn-primary btn-sm rounded">Create new</a>
+        </div>
+    </div>
+    <div class="card mb-4">
+       
+        <div class="card-body">
+            
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Discount</th>
+                                        <th>product</th>
+                                        <th>start_date</th>
+                                        <th>end_date</th>
+                                        <th>Status</th>
+                                        <th>edit</th>
+                                        <th>delete</th>
+                                       
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                   
+                                    
+                                    {% for offer in product_offers %}
+                        <tr>
+                            <td>{{ offer.discount_percentage }}%</td>
+                                    <td>
+                                        {% for product in offer.products.all %}
+                                            {{ product.title }}{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <td>{{ offer.start_date }}</td>
+                                    <td>{{ offer.end_date }}</td>
+                                    <td>
+                                        <a href="#"> 
+                                            <h6 class="mb-0">
+                                                {% if offer.active %}
+                                                    <span style="color: rgb(143, 143, 39);">Active</span>
+                                                {% else %}
+                                                    <span style="color: rgb(120, 40, 40);">Inactive</span>
+                                                {% endif %}
+                                            </h6>
+                                        </a>
+                                    </td>
+                                    <td><a href="{% url "appadmin:edit_product_offer" offer.id%}" class= 'btn btn-secondary'> Edit </a></td>
+                                    <td><a href="{% url "appadmin:delete_product_offer" offer.id %}" class= 'btn btn-danger'> Delete </a></td>
+                                </tr>
+                            {% endfor %}
+
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        
+        
+             <!-- itemlist  .// -->
+        </div> <!-- card-body end// -->
+    </div> <!-- card end// -->
+    
+    <div class="content-header">
+        <div>
+          
+          <h2 class="content-title card-title"> Category Offers</h2>
+          
+        </div>
+        <div>
+      
+          <a href="{% url 'appadmin:create_category_offer' %}" class="btn btn-primary btn-sm rounded">Create new</a>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+       
+      <div class="card-body">
+          
+                      <div class="table-responsive">
+                          <table class="table table-hover">
+                              <thead>
+                                  <tr>
+                                        <th>Discount</th>
+                                        <th>Catgory</th>
+                                        <th>start_date</th>
+                                        <th>end_date</th>
+                                        <th>Status</th>
+                                        <th>edit</th>
+                                        <th>delete</th>
+                                     
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                 
+                                  
+                                  {% for offer in category_offer %}
+                                  <tr>
+                                      <td><a href="#}">
+                                          {{offer.cat_discount_percentage}}
+                                        </a>
+                                      </td>
+                                     
+                                      <td>
+                                        {{ offer.category_name }}
+                                    </td>
+                                        <td>
+                                            {{offer.cat_start_date}}
+                                        </td>
+                                        <td>
+                                            {{offer.cat_end_date}}
+                                        </td>
+                                    <td><a href="#"> <h6 class="mb-0">{% if offer.cat_active %} <span style="color: rgb(143, 143, 39);">Active</span>  {% else %} <span style="color: rgb(120, 40, 40);">Inactive</span> {%endif %}</h6></a></td>
+                                    <td><a href="{% url "appadmin:edit_category_offer" offer.id %}" class= 'btn btn-secondary'> Edit </a></td>
+                                    <td><a href="{% url "appadmin:delete_category_offer" offer.id %}" class= 'btn btn-danger'> Delete </a></td>
+                                  </tr>
+                                  {% endfor %}
+                              </tbody>
+                          </table>
+                      </div>
+          
+                      
+      
+           <!-- itemlist  .// -->
+      </div> <!-- card-body end// -->
+  </div> <!-- card end// -->
+  </section>
+  
+
+
+
+{% endblock %}

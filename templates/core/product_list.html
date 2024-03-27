@@ -4,9 +4,6 @@
 
 
 
-<!-- Breadcrumb Section End -->
-
-<!-- Product Section Begin -->
 
 <section class="product spad">
     <div class="container">
@@ -96,10 +93,12 @@
                         </div>
                     </div>
                 </div>
-               
+
+
+                <!--productlist-->
                 <div class="row">
                     {% for product in products %}
-                        <div class="col-lg-4 col-md-6 col-sm-6"  style="cursor: pointer;">
+                        <div class="col-lg-4 col-md-6 col-sm-6" style="cursor: pointer;">
                             <div class="product__item" onclick="window.location='{% url 'core:product_detail' product_pid=product.pid %}';">
                                 <div class="product__item__pic set-bg" data-setbg="{{ product.image.url }}">
                                     <ul class="product__item__pic__hover">
@@ -109,12 +108,15 @@
                                 </div>
                                 <div class="product__item__text">
                                     <h6>{{ product.title }}</h6>
-                                    <h5>₹{{ product.price }}</h5>
+                                    <h5 style='text-decoration:line-through '>₹{{ product.old_price }}</h5>
+                                    <h5 style='color:red'>₹{{ product.price }}</h5>
+    
                                 </div>
                             </div>
                         </div>
                     {% endfor %}
                 </div>
+                
                 
                 
 

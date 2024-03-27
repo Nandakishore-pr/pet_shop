@@ -1,7 +1,12 @@
 {% extends "base/base.html" %}
 {% load static %}
 {% block content %}
-
+<style>
+    .price-adjust{
+        font-size: 30px;
+        text-decoration: line-through;
+    }
+</style>
 
 
 <!-- Breadcrumb Section Begin -->
@@ -59,7 +64,7 @@
             </div>
             <div class="col-lg-6 col-md-6">
                 <div class="product__details__text">
-                    <h3>{{product.title}}</h3>
+                    <h2>{{product.title}}</h2>
                     <div class="product__details__rating">
                         <i class="fa fa-star"></i>
                         <i class="fa fa-star"></i>
@@ -67,7 +72,9 @@
                         <i class="fa fa-star"></i>
                         <i class="fa fa-star-half-o"></i>
                         <span>(18 reviews)</span>
+                    
                     </div>
+                    <div class='price-adjust'>₹{{product.old_price}}</div>
                     <div class="product__details__price">₹{{product.price}}</div>
                     <p>{{product.description}}</p>
                     {% comment %} <div class="product__details__quantity">
